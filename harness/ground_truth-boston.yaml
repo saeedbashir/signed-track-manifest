@@ -1,0 +1,24 @@
+# Ground truth for real broadcasts, Boston City TV, Tier 1 development corpus.
+#
+# Rectangles read by eye off a coordinate grid rendered over a clean frame at
+# t=12s (dev-corpus/gt/*-grid.png). They bound the interpreter's video tile at
+# its visible border, which in this series is a bright 1-2px line. Accurate to
+# roughly +/-8 source pixels, which is enough to separate a correct window from
+# one that is twice too tall, and not enough to tune an edge detector on.
+#
+# Clips are excerpts and are not committed. Paths are relative to this file.
+clips:
+  - clip: ../../dev-corpus/boston/03.mp4
+    rect: {x: 528, y: 96, w: 298, h: 200}
+    notes: >-
+      Remote interpreter tile overlaid on a full-width press conference picture.
+      Triage called this side-panel and therefore zero-fill; the programme
+      plainly continues behind and around the tile, so a crop leaves a hole.
+  - clip: ../../dev-corpus/boston/09.mp4
+    rect: {x: 585, y: 0, w: 269, h: 190}
+    notes: Corner inset, flush to the top and right edges, over a plain blue backdrop.
+  - clip: ../../dev-corpus/boston/14.mp4
+    rect: {x: 537, y: 0, w: 317, h: 238}
+    notes: >-
+      Outdoor. Triage called this side-panel and zero-fill. The chosen window
+      runs to y=410 and encloses a bystander standing in the main scene.
