@@ -1,24 +1,69 @@
 # Ground truth for real broadcasts, Boston City TV, Tier 1 development corpus.
 #
-# Rectangles read by eye off a coordinate grid rendered over a clean frame at
-# t=12s (dev-corpus/gt/*-grid.png). They bound the interpreter's video tile at
-# its visible border, which in this series is a bright 1-2px line. Accurate to
-# roughly +/-8 source pixels, which is enough to separate a correct window from
-# one that is twice too tall, and not enough to tune an edge detector on.
+# Rectangles read by eye off a coordinate grid rendered over a clean frame of each
+# clip (dev-corpus/gt/*-grid.png). They bound the interpreter's video tile at its
+# visible border, which in this series is a bright 1-2px line. Accurate to roughly
+# +/-8 source pixels: enough to separate a correct window from one twice too tall,
+# not enough to tune an edge detector on.
 #
-# Clips are excerpts and are not committed. Paths are relative to this file.
+# All clips are 120s excerpts. Frames sampled at t=12s except 02, read at t=400s of
+# the full file and since trimmed to the 360-480s window that contains it.
+#
+# Clips are not committed. Paths are relative to this file.
 clips:
+  - clip: ../../dev-corpus/boston/01.mp4
+    rect: {x: 566, y: 0, w: 288, h: 213}
+    notes: >-
+      Corner inset flush to top and right, plain blue backdrop.
+  - clip: ../../dev-corpus/boston/02.mp4
+    rect: {x: 537, y: 0, w: 317, h: 237}
+    notes: >-
+      Outdoor salt-pile event, January. Near-identical staging to 14.
   - clip: ../../dev-corpus/boston/03.mp4
     rect: {x: 528, y: 96, w: 298, h: 200}
     notes: >-
-      Remote interpreter tile overlaid on a full-width press conference picture.
-      Triage called this side-panel and therefore zero-fill; the programme
-      plainly continues behind and around the tile, so a crop leaves a hole.
+      Remote interpreter tile overlaid on a full-width picture. Triage called this side-panel and zero-fill; the programme continues behind and around the tile, so a crop leaves a hole.
+  - clip: ../../dev-corpus/boston/04.mp4
+    rect: {x: 527, y: 95, w: 303, h: 202}
+    notes: >-
+      Letterboxed picture, white-bordered tile overlaid right of centre.
+  - clip: ../../dev-corpus/boston/05.mp4
+    rect: {x: 500, y: 70, w: 336, h: 227}
+    notes: >-
+      Outdoor, City Hall. Tile clear of all frame edges.
+  - clip: ../../dev-corpus/boston/06.mp4
+    rect: {x: 475, y: 58, w: 340, h: 227}
+    notes: >-
+      Outdoor, City Hall Plaza. Largest tile in the corpus relative to frame.
+  - clip: ../../dev-corpus/boston/07.mp4
+    rect: {x: 553, y: 0, w: 301, h: 197}
+    notes: >-
+      Corner inset flush to top and right.
+  - clip: ../../dev-corpus/boston/08.mp4
+    rect: {x: 481, y: 0, w: 373, h: 236}
+    notes: >-
+      Faneuil Hall. Tile flush top and right, wider than most.
   - clip: ../../dev-corpus/boston/09.mp4
     rect: {x: 585, y: 0, w: 269, h: 190}
-    notes: Corner inset, flush to the top and right edges, over a plain blue backdrop.
+    notes: >-
+      Corner inset flush to top and right over a plain blue backdrop.
+  - clip: ../../dev-corpus/boston/10.mp4
+    rect: {x: 355, y: 0, w: 125, h: 145}
+    notes: >-
+      Source is 480x360, the only clip not 854x480. Later broadcast, Mayor Janey era.
+  - clip: ../../dev-corpus/boston/11.mp4
+    rect: {x: 548, y: 0, w: 306, h: 197}
+    notes: >-
+      Corner inset flush to top and right.
+  - clip: ../../dev-corpus/boston/12.mp4
+    rect: {x: 551, y: 118, w: 303, h: 207}
+    notes: >-
+      Tile clear of the top edge, flush right.
+  - clip: ../../dev-corpus/boston/13.mp4
+    rect: {x: 541, y: 66, w: 305, h: 206}
+    notes: >-
+      Public safety press conference. Tile clear of all edges.
   - clip: ../../dev-corpus/boston/14.mp4
     rect: {x: 537, y: 0, w: 317, h: 238}
     notes: >-
-      Outdoor. Triage called this side-panel and zero-fill. The chosen window
-      runs to y=410 and encloses a bystander standing in the main scene.
+      Outdoor salt-pile event, November. Triage called this side-panel and zero-fill; the chosen window runs to y=410 and encloses a bystander standing in the main scene.
