@@ -1,0 +1,18 @@
+# Ground truth for Scottish Parliament TV, BSL-interpreted proceedings.
+#
+# Read off a coordinate grid over a clean frame at t=20s of a 120s excerpt taken
+# from the publisher's own HLS stream at 1920x1080.
+#
+# The layout is a true side panel: the chamber picture occupies x 0-1080 and the
+# interpreter's purple panel x 1080-1920, both between y=108 and y=868. Above and
+# below those are full-width Parliament branding bands, which belong to neither.
+#
+# Clips are not committed. Paths are relative to this file.
+clips:
+  - clip: ../../sp-download/fmqs-excerpt.mp4
+    rect: {x: 1080, y: 108, w: 840, h: 760}
+    notes: >-
+      First Minister's Questions (Party Leaders) (BSL), 17 September 2026.
+      Scottish Parliament Copyright Licence. The panel boundary is a hard,
+      high-contrast edge against a picture that is neither static nor uniform,
+      which is the opposite of the Boston corner insets.
