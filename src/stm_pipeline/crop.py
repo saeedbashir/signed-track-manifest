@@ -139,16 +139,36 @@ def grow_window(
     against a frame edge is a property of the window, and a person standing
     inside a side panel has margin on both sides and is never flush.
 
-    KNOWN LIMITATION, measured on a real briefing 2026-09-21. A person detector
-    routinely returns a box a few pixels PAST the window border. Growth seeded
-    from there references the programme rather than the backdrop and follows it
-    outward -- on the Boston clip, 140 source pixels down a uniform wall. The
-    border itself is unmistakable in the data (a 119-level step in mean grey
-    against under 10 of variation inside the backdrop), so an edge that could
-    move inward as well as outward would find it. A border-snapping
-    implementation was tried and fixed that clip, but regressed four of six
-    synthetic layouts, so it is not in. Settle this with the harness once there
-    are real clips on both layouts; do not tune it on one.
+    KNOWN LIMITATION, measured on 14 real broadcasts 2026-09-21. Growth walks
+    outward and cannot come back. When the programme beside the window is itself
+    flat and static -- a press conference backdrop, a studio wall -- nothing
+    stops it and the window swallows main picture. Against hand ground truth:
+    **mean IoU 0.629, 0 of 14 at the 0.85 bar**, and on one clip the window
+    encloses a bystander standing in the main scene. It also inverts triage:
+    grow far enough and the region reads as a side panel, which is assumed to
+    need no fill, so the worst-bounded clips score best.
+
+    BORDER SNAPPING WAS TRIED TWICE AND DOES NOT WORK. The border looks
+    unmistakable -- a large step in mean grey where backdrop meets programme --
+    so an edge that could move inward as well as outward ought to find it. An
+    implementation that scores candidate positions by the grey step either side,
+    searching between the person box and the grown edge, was measured on both
+    corpora:
+
+        corpus       baseline -> snapped
+        synthetic      0.617  ->  0.562   (one side panel misclassified as inset)
+        real (14)      0.629  ->  0.618   (worst: a 480x360 clip, 0.718 -> 0.543)
+
+    It is WORSE ON BOTH. The first attempt was reverted believing the synthetic
+    corpus was at fault; real content says otherwise. Do not try this a third
+    time without a different idea -- the strongest grey step near the edge is
+    frequently not the window border, and a fixed band and margin in pixels
+    cannot hold across source resolutions.
+
+    What is not yet ruled out: making growth stop correctly rather than
+    correcting it afterwards, by requiring the band's spatial uniformity as well
+    as its temporal stillness. The programme beside these windows is static but
+    it is not featureless.
     """
     b = max(1, config.window_band)
     x1, y1, x2, y2 = rect.x, rect.y, rect.x2, rect.y2

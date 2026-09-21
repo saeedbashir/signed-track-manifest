@@ -1,10 +1,36 @@
-# Ground truth for the validation harness.
-#
-# One entry per clip: the rectangle a human drew around the interpreter, in
-# source pixels, plus optionally the rectangle the face occupies at its most
-# expressive. Fill this in with `stm harness label CLIP --face`, then score with
-# `stm harness score harness/ground_truth.yaml`.
-#
-# Twenty clips is the target. Clips themselves are never committed; paths are
-# relative to this file.
-clips: []
+clips:
+- clip: corpus/01-inset-br-plain.mp4
+  rect:
+    x: 960
+    y: 280
+    w: 280
+    h: 400
+  notes: corner inset, busy programme
+- clip: corpus/02-inset-tl-calm.mp4
+  rect:
+    x: 40
+    y: 40
+    w: 280
+    h: 400
+  notes: corner inset, calm programme
+- clip: corpus/03-panel-right.mp4
+  rect:
+    x: 980
+    y: 0
+    w: 300
+    h: 720
+  notes: side panel on the right
+- clip: corpus/04-panel-left.mp4
+  rect:
+    x: 0
+    y: 0
+    w: 300
+    h: 720
+  notes: side panel on the left
+- clip: corpus/06-anchor-and-signer.mp4
+  rect:
+    x: 978
+    y: 305
+    w: 262
+    h: 375
+  notes: 'large still anchor plus small signing inset: motion must decide'
