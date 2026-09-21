@@ -1,0 +1,10 @@
+# Ground truth for the validation harness.
+#
+# One entry per clip: the rectangle a human drew around the interpreter, in
+# source pixels, plus optionally the rectangle the face occupies at its most
+# expressive. Fill this in with `stm harness label CLIP --face`, then score with
+# `stm harness score harness/ground_truth.yaml`.
+#
+# Twenty clips is the target. Clips themselves are never committed; paths are
+# relative to this file.
+clips: []

@@ -1,0 +1,50 @@
+{
+  "stmVersion": "0.1",
+  "id": "example-corner-inset",
+  "title": "Example — corner inset interpreter",
+  "durationMs": 486000,
+  "source": {
+    "publisher": "Example Agency",
+    "url": "https://example.gov/briefings/2026-03-14",
+    "licence": "public-domain-usgov",
+    "attribution": "Example Agency. Public domain.",
+    "productionCredit": "verified: produced in-house",
+    "acquisitionRoute": "agency download page"
+  },
+  "video": {
+    "main": { "url": "main.mp4", "width": 1920, "height": 1080, "codec": "h264" },
+    "poster": "poster.jpg"
+  },
+  "signLanguage": [
+    {
+      "language": "ase",
+      "languageLabel": "American Sign Language",
+      "provenance": "human-interpreter",
+      "extraction": {
+        "method": "detected-crop",
+        "sourceLayout": "corner-inset",
+        "confidence": 0.91,
+        "cropRect": { "x": 1392, "y": 612, "w": 432, "h": 396 },
+        "fillMethod": "interpolated-surround"
+      },
+      "track": {
+        "url": "signer-ase.mp4",
+        "width": 432,
+        "height": 396,
+        "codec": "h264",
+        "syncOffsetMs": 0
+      }
+    }
+  ],
+  "captions": [
+    { "kind": "verbatim", "language": "en", "url": "captions/verbatim.en.vtt", "format": "webvtt" },
+    {
+      "kind": "simplified",
+      "language": "en",
+      "url": "captions/simplified.en.vtt",
+      "format": "webvtt",
+      "generatedBy": "amazon-bedrock",
+      "reviewed": false
+    }
+  ]
+}

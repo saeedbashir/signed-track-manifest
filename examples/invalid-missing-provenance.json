@@ -1,0 +1,31 @@
+{
+  "stmVersion": "0.1",
+  "id": "invalid-missing-provenance",
+  "title": "Invalid — a sign track with no provenance",
+  "durationMs": 1000,
+  "source": {
+    "publisher": "Example",
+    "url": "https://example.org",
+    "licence": "cc0-1.0",
+    "attribution": "Example."
+  },
+  "video": {
+    "main": { "url": "main.mp4", "width": 1920, "height": 1080, "codec": "h264" },
+    "poster": "poster.jpg"
+  },
+  "signLanguage": [
+    {
+      "language": "ase",
+      "languageLabel": "American Sign Language",
+      "extraction": {
+        "method": "detected-crop",
+        "sourceLayout": "corner-inset",
+        "confidence": 0.9,
+        "cropRect": { "x": 0, "y": 0, "w": 10, "h": 10 },
+        "fillMethod": "none"
+      },
+      "track": { "url": "signer.mp4", "width": 10, "height": 10, "codec": "h264", "syncOffsetMs": 0 }
+    }
+  ],
+  "captions": []
+}

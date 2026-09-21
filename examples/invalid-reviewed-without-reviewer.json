@@ -1,0 +1,27 @@
+{
+  "stmVersion": "0.1",
+  "id": "invalid-reviewed-without-reviewer",
+  "title": "Invalid — a generated caption claiming review with no reviewer",
+  "durationMs": 1000,
+  "source": {
+    "publisher": "Example",
+    "url": "https://example.org",
+    "licence": "cc0-1.0",
+    "attribution": "Example."
+  },
+  "video": {
+    "main": { "url": "main.mp4", "width": 1920, "height": 1080, "codec": "h264" },
+    "poster": "poster.jpg"
+  },
+  "signLanguage": [],
+  "captions": [
+    {
+      "kind": "simplified",
+      "language": "en",
+      "url": "simplified.vtt",
+      "format": "webvtt",
+      "generatedBy": "some-model",
+      "reviewed": true
+    }
+  ]
+}

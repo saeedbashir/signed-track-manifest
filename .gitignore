@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+dist/
+build/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Pipeline working data — never commit media
+work/
+out/
+*.mp4
+*.webm
+*.mkv
+*.mov
+*.onnx
+!examples/**
+
+# OS
+.DS_Store

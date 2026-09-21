@@ -1,0 +1,23 @@
+{
+  "stmVersion": "0.1",
+  "titles": [
+    {
+      "id": "example-corner-inset",
+      "title": "Example — corner inset interpreter",
+      "durationMs": 486000,
+      "poster": "example-corner-inset/poster.jpg",
+      "manifestUrl": "example-corner-inset/manifest.json",
+      "signLanguages": ["ase"],
+      "confidence": 0.91
+    },
+    {
+      "id": "example-side-panel",
+      "title": "Example — side panel interpreter, two sign languages",
+      "durationMs": 1200000,
+      "poster": "https://cdn.example.org/42/poster.jpg",
+      "manifestUrl": "https://cdn.example.org/42/manifest.json",
+      "signLanguages": ["bfi", "ase"],
+      "confidence": 0.97
+    }
+  ]
+}
