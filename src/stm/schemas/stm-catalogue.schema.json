@@ -1,28 +1,62 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/saeedbashir/signed-track-manifest/schema/0.1/stm-catalogue.schema.json",
+  "$id": "https://github.com/saeedbashir/signed-track-manifest/schema/0.2/stm-catalogue.schema.json",
   "title": "Signed Track Manifest — catalogue index",
   "description": "A flat index of titles. Players fetch this once at launch and per-title manifests on play. Keep it small.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["stmVersion", "titles"],
+  "required": [
+    "stmVersion",
+    "titles"
+  ],
   "properties": {
-    "stmVersion": { "const": "0.1" },
+    "stmVersion": {
+      "type": "string",
+      "enum": [
+        "0.1",
+        "0.2"
+      ]
+    },
     "titles": {
       "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "title", "durationMs", "poster", "manifestUrl", "signLanguages"],
+        "required": [
+          "id",
+          "title",
+          "durationMs",
+          "poster",
+          "manifestUrl",
+          "signLanguages"
+        ],
         "properties": {
-          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{1,63}$" },
-          "title": { "type": "string", "minLength": 1 },
-          "durationMs": { "type": "integer", "minimum": 0 },
-          "poster": { "type": "string", "minLength": 1 },
-          "manifestUrl": { "type": "string", "minLength": 1 },
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{1,63}$"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "durationMs": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "poster": {
+            "type": "string",
+            "minLength": 1
+          },
+          "manifestUrl": {
+            "type": "string",
+            "minLength": 1
+          },
           "signLanguages": {
             "type": "array",
-            "items": { "type": "string", "pattern": "^[a-z]{3}$" }
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z]{3}$"
+            }
           },
           "confidence": {
             "type": "number",

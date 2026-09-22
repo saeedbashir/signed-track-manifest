@@ -104,6 +104,15 @@ def test_manual_rect_side_panel(synthetic_clip: Path, tmp_path: Path) -> None:
     assert ex["fillMethod"] == "none"
     assert ex["confidence"] == 1.0
     assert data["video"]["main"]["width"] == 240
+    # The case that matters: a hand-measured crop never ran analysis, and the
+    # activity track has to exist for it all the same.
+    assert data["stmVersion"] == "0.2"
+    act = data["signLanguage"][0]["activity"]
+    assert act["intervalMs"] == 1000 and act["scale"] == "title-p95"
+    assert len(act["values"]) == 2  # a 2 s clip
+    assert all(isinstance(v, int) and 0 <= v <= 100 for v in act["values"])
+    report = json.loads((tmp_path / "out" / "manual-01" / "analysis.json").read_text())
+    assert report["activity"]["length"] == 2 and report["activity"]["samples"] > 0
 
 
 @requires_ffmpeg

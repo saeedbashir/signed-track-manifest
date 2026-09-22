@@ -1,39 +1,99 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/saeedbashir/signed-track-manifest/schema/0.1/stm-title.schema.json",
+  "$id": "https://github.com/saeedbashir/signed-track-manifest/schema/0.2/stm-title.schema.json",
   "title": "Signed Track Manifest — per-title manifest",
-  "description": "Describes one title: its main programme video, zero or more sign language tracks delivered as separate video layers, and caption tracks. Version 0.1.",
+  "description": "Describes one title: its main programme video, zero or more sign language tracks delivered as separate video layers, and caption tracks. Version 0.2; a valid 0.1 manifest is also a valid 0.2 manifest.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["stmVersion", "id", "title", "durationMs", "source", "video", "signLanguage", "captions"],
+  "required": [
+    "stmVersion",
+    "id",
+    "title",
+    "durationMs",
+    "source",
+    "video",
+    "signLanguage",
+    "captions"
+  ],
   "properties": {
-    "stmVersion": { "const": "0.1" },
+    "stmVersion": {
+      "type": "string",
+      "enum": [
+        "0.1",
+        "0.2"
+      ],
+      "description": "0.2 adds the optional signLanguage[].activity track. Nothing else changed."
+    },
     "id": {
       "type": "string",
       "pattern": "^[a-z0-9][a-z0-9-]{1,63}$",
       "description": "Stable identifier, lower-case, hyphens. Unique within a catalogue."
     },
-    "title": { "type": "string", "minLength": 1 },
-    "durationMs": { "type": "integer", "minimum": 0 },
-    "source": { "$ref": "#/$defs/source" },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "durationMs": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "source": {
+      "$ref": "#/$defs/source"
+    },
     "video": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["main", "poster"],
+      "required": [
+        "main",
+        "poster"
+      ],
       "properties": {
-        "main": { "$ref": "#/$defs/videoAsset" },
-        "poster": { "$ref": "#/$defs/url" }
+        "main": {
+          "$ref": "#/$defs/videoAsset"
+        },
+        "poster": {
+          "$ref": "#/$defs/url"
+        }
       }
     },
     "signLanguage": {
       "type": "array",
-      "items": { "$ref": "#/$defs/signTrack" }
+      "items": {
+        "$ref": "#/$defs/signTrack"
+      }
     },
     "captions": {
       "type": "array",
-      "items": { "$ref": "#/$defs/caption" }
+      "items": {
+        "$ref": "#/$defs/caption"
+      }
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "stmVersion": {
+            "const": "0.1"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "signLanguage": {
+            "items": {
+              "not": {
+                "required": [
+                  "activity"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "$comment": "activity is a 0.2 field. A 0.1 manifest carrying it would be rejected by every 0.1 reader, so it is rejected here too: the version has to mean something."
+    }
+  ],
   "$defs": {
     "url": {
       "type": "string",
@@ -43,16 +103,29 @@
     "source": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["publisher", "url", "licence", "attribution"],
+      "required": [
+        "publisher",
+        "url",
+        "licence",
+        "attribution"
+      ],
       "properties": {
-        "publisher": { "type": "string", "minLength": 1 },
-        "url": { "$ref": "#/$defs/url" },
+        "publisher": {
+          "type": "string",
+          "minLength": 1
+        },
+        "url": {
+          "$ref": "#/$defs/url"
+        },
         "licence": {
           "type": "string",
           "minLength": 1,
           "description": "Licence identifier. Recommended values: public-domain-usgov, cc0-1.0, cc-by-4.0, or an SPDX identifier."
         },
-        "attribution": { "type": "string", "minLength": 1 },
+        "attribution": {
+          "type": "string",
+          "minLength": 1
+        },
         "productionCredit": {
           "type": "string",
           "description": "Who actually produced the video, which may differ from the publisher and changes the copyright position."
@@ -66,32 +139,88 @@
     "videoAsset": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["url", "width", "height", "codec"],
+      "required": [
+        "url",
+        "width",
+        "height",
+        "codec"
+      ],
       "properties": {
-        "url": { "$ref": "#/$defs/url" },
-        "width": { "type": "integer", "minimum": 1 },
-        "height": { "type": "integer", "minimum": 1 },
-        "codec": { "type": "string", "enum": ["h264", "hevc", "vp9", "av1"] }
+        "url": {
+          "$ref": "#/$defs/url"
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "codec": {
+          "type": "string",
+          "enum": [
+            "h264",
+            "hevc",
+            "vp9",
+            "av1"
+          ]
+        }
       }
     },
     "rect": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["x", "y", "w", "h"],
+      "required": [
+        "x",
+        "y",
+        "w",
+        "h"
+      ],
       "properties": {
-        "x": { "type": "integer", "minimum": 0 },
-        "y": { "type": "integer", "minimum": 0 },
-        "w": { "type": "integer", "minimum": 1 },
-        "h": { "type": "integer", "minimum": 1 }
+        "x": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "y": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "w": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "h": {
+          "type": "integer",
+          "minimum": 1
+        }
       }
     },
     "extraction": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["method", "sourceLayout", "confidence", "cropRect", "fillMethod"],
+      "required": [
+        "method",
+        "sourceLayout",
+        "confidence",
+        "cropRect",
+        "fillMethod"
+      ],
       "properties": {
-        "method": { "type": "string", "enum": ["detected-crop", "manual-crop"] },
-        "sourceLayout": { "type": "string", "enum": ["corner-inset", "side-panel"] },
+        "method": {
+          "type": "string",
+          "enum": [
+            "detected-crop",
+            "manual-crop"
+          ]
+        },
+        "sourceLayout": {
+          "type": "string",
+          "enum": [
+            "corner-inset",
+            "side-panel"
+          ]
+        },
         "confidence": {
           "type": "number",
           "minimum": 0,
@@ -104,7 +233,11 @@
         },
         "fillMethod": {
           "type": "string",
-          "enum": ["none", "interpolated-surround", "blurred-surround"],
+          "enum": [
+            "none",
+            "interpolated-surround",
+            "blurred-surround"
+          ],
           "description": "How the vacated rectangle in the main video was patched. Never generative."
         }
       }
@@ -112,50 +245,115 @@
     "signTrack": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["language", "languageLabel", "provenance", "track"],
+      "required": [
+        "language",
+        "languageLabel",
+        "provenance",
+        "track"
+      ],
       "properties": {
         "language": {
           "type": "string",
           "pattern": "^[a-z]{3}$",
           "description": "ISO 639-3 code of the signed language: ase for American Sign Language, bfi for British Sign Language."
         },
-        "languageLabel": { "type": "string", "minLength": 1 },
+        "languageLabel": {
+          "type": "string",
+          "minLength": 1
+        },
         "provenance": {
           "type": "string",
-          "enum": ["human-interpreter", "synthesised"],
+          "enum": [
+            "human-interpreter",
+            "synthesised"
+          ],
           "description": "Required, no default. Whether a human produced this signing or a machine did. A synthesised track can never masquerade as a human one."
         },
-        "extraction": { "$ref": "#/$defs/extraction" },
-        "generatedBy": { "type": "string", "minLength": 1 },
+        "extraction": {
+          "$ref": "#/$defs/extraction"
+        },
+        "generatedBy": {
+          "type": "string",
+          "minLength": 1
+        },
         "track": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["url", "width", "height", "codec", "syncOffsetMs"],
+          "required": [
+            "url",
+            "width",
+            "height",
+            "codec",
+            "syncOffsetMs"
+          ],
           "properties": {
-            "url": { "$ref": "#/$defs/url" },
-            "width": { "type": "integer", "minimum": 1 },
-            "height": { "type": "integer", "minimum": 1 },
-            "codec": { "type": "string", "enum": ["h264", "hevc", "vp9", "av1"] },
+            "url": {
+              "$ref": "#/$defs/url"
+            },
+            "width": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "codec": {
+              "type": "string",
+              "enum": [
+                "h264",
+                "hevc",
+                "vp9",
+                "av1"
+              ]
+            },
             "syncOffsetMs": {
               "type": "integer",
               "description": "Positive delays the signer track relative to the main programme; the player applies it, the pipeline never re-encodes for it."
             }
           }
+        },
+        "activity": {
+          "$ref": "#/$defs/activity"
         }
       },
       "allOf": [
         {
-          "if": { "properties": { "provenance": { "const": "human-interpreter" } } },
+          "if": {
+            "properties": {
+              "provenance": {
+                "const": "human-interpreter"
+              }
+            }
+          },
           "then": {
-            "required": ["extraction"],
-            "not": { "required": ["generatedBy"] }
+            "required": [
+              "extraction"
+            ],
+            "not": {
+              "required": [
+                "generatedBy"
+              ]
+            }
           }
         },
         {
-          "if": { "properties": { "provenance": { "const": "synthesised" } } },
+          "if": {
+            "properties": {
+              "provenance": {
+                "const": "synthesised"
+              }
+            }
+          },
           "then": {
-            "required": ["generatedBy"],
-            "not": { "required": ["extraction"] }
+            "required": [
+              "generatedBy"
+            ],
+            "not": {
+              "required": [
+                "extraction"
+              ]
+            }
           }
         }
       ]
@@ -163,16 +361,34 @@
     "caption": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["kind", "language", "url", "format"],
+      "required": [
+        "kind",
+        "language",
+        "url",
+        "format"
+      ],
       "properties": {
-        "kind": { "type": "string", "enum": ["verbatim", "simplified"] },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "verbatim",
+            "simplified"
+          ]
+        },
         "language": {
           "type": "string",
           "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$",
           "description": "BCP 47 tag of the written language."
         },
-        "url": { "$ref": "#/$defs/url" },
-        "format": { "type": "string", "enum": ["webvtt"] },
+        "url": {
+          "$ref": "#/$defs/url"
+        },
+        "format": {
+          "type": "string",
+          "enum": [
+            "webvtt"
+          ]
+        },
         "generatedBy": {
           "type": "string",
           "minLength": 1,
@@ -190,18 +406,87 @@
       },
       "allOf": [
         {
-          "if": { "required": ["generatedBy"] },
-          "then": { "required": ["reviewed"] }
+          "if": {
+            "required": [
+              "generatedBy"
+            ]
+          },
+          "then": {
+            "required": [
+              "reviewed"
+            ]
+          }
         },
         {
-          "if": { "properties": { "reviewed": { "const": true } }, "required": ["reviewed"] },
-          "then": { "required": ["reviewedBy"] }
+          "if": {
+            "properties": {
+              "reviewed": {
+                "const": true
+              }
+            },
+            "required": [
+              "reviewed"
+            ]
+          },
+          "then": {
+            "required": [
+              "reviewedBy"
+            ]
+          }
         },
         {
-          "if": { "required": ["reviewedBy"] },
-          "then": { "properties": { "reviewed": { "const": true } }, "required": ["reviewed"] }
+          "if": {
+            "required": [
+              "reviewedBy"
+            ]
+          },
+          "then": {
+            "properties": {
+              "reviewed": {
+                "const": true
+              }
+            },
+            "required": [
+              "reviewed"
+            ]
+          }
         }
       ]
+    },
+    "activity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "intervalMs",
+        "scale",
+        "values"
+      ],
+      "description": "How much the interpreter moves, per interval from t=0, as integers 0..100 normalised to the title's own 95th percentile. Hand motion only: not meaning, not quality. Players choose their own idle threshold. Added in 0.2.",
+      "properties": {
+        "intervalMs": {
+          "type": "integer",
+          "minimum": 200,
+          "maximum": 5000,
+          "description": "Duration each value covers. 1000 from this pipeline."
+        },
+        "scale": {
+          "type": "string",
+          "enum": [
+            "title-p95"
+          ],
+          "description": "How values were normalised. Closed; a new method is a new value."
+        },
+        "values": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "description": "One per interval. values.length x intervalMs is about durationMs; a short array is padded with its last value by the player, never extrapolated by the producer."
+        }
+      }
     }
   }
 }

@@ -1,4 +1,4 @@
-# Signed Track Manifest — format specification, version 0.1
+# Signed Track Manifest — format specification, version 0.2
 
 STM describes a video title whose sign language interpretation is delivered as
 one or more **separate video tracks**, so that a receiver can control the
@@ -15,7 +15,7 @@ and by `validate-stm`.
 
 ```json
 {
-  "stmVersion": "0.1",
+  "stmVersion": "0.2",
   "id": "wh-briefing-2026-03-14",
   "title": "Press Briefing — 14 March 2026",
   "durationMs": 486000,
@@ -58,7 +58,7 @@ and by `validate-stm`.
 
 | Field | Type | Required | Meaning |
 | --- | --- | --- | --- |
-| `stmVersion` | `"0.1"` | yes | Format version. |
+| `stmVersion` | `"0.1"` \| `"0.2"` | yes | Format version. See *Versioning*. |
 | `id` | string `^[a-z0-9][a-z0-9-]{1,63}$` | yes | Stable identifier, unique within a catalogue. |
 | `title` | string | yes | Display title. |
 | `durationMs` | integer ≥ 0 | yes | Duration of the main programme. |
@@ -88,6 +88,7 @@ what make a bundled, offline catalogue possible.
 | `generatedBy` | string | iff synthesised | What generated it. |
 | `track` | video asset + `syncOffsetMs` | yes | The signer video. |
 | `track.syncOffsetMs` | integer | yes | Positive delays the signer relative to the programme. Applied by the player. |
+| `activity` | object | no (0.2) | How much the interpreter moves over time. See *Activity*. |
 
 `provenance` is the most important field in the format. Interpretation lags
 speech, viewers deserve to know whether they are watching a person, and a format
@@ -95,6 +96,31 @@ that let a synthesised track masquerade as a human one would do harm. So it is
 required, closed, and has no default. This pipeline only ever writes
 `human-interpreter`; the value `synthesised` exists so that other producers
 label honestly.
+
+### Activity (added in 0.2)
+
+```json
+"activity": { "intervalMs": 1000, "scale": "title-p95", "values": [0, 0, 12, 68, 91, 88, 40, 3, 0] }
+```
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `intervalMs` | integer 200..5000 | Duration each value covers, from t=0. This pipeline writes 1000. |
+| `scale` | `title-p95` | How the values were normalised. Closed; a second method is a new value. |
+| `values` | integers 0..100 | One per interval. `values.length × intervalMs` is about `durationMs`. A short array is padded with its last value by the player and never extrapolated by the producer. |
+
+The value is **hand and face motion inside the crop**, normalised to the title's
+own 95th percentile: 100 is "as active as this interpreter gets", 0 is still. It
+is not a measure of meaning, of interpretation quality, or of anything about
+the language — it is how much the pixels moved, and the format says so because
+a number published without that sentence will be read as one.
+
+The producer publishes the measurement; the **player decides what "idle"
+means**, exactly as it decides what a low `confidence` means. The reference
+player fades the signer layer at a threshold of 20 after two seconds and
+restores it after half a second above, opt-in and off by default. Whether
+signing viewers want that is an open question, which is why the threshold is
+the player's and not the format's.
 
 ### Extraction
 
@@ -145,10 +171,15 @@ confidence and very large sync offsets are warnings, promoted to errors with
 
 ## Versioning
 
-`stmVersion` is a string constant. Backward-incompatible changes bump it; a
-player must refuse a version it does not know. Additional properties are
-rejected everywhere, so extensions require a version bump rather than silent
-vendor fields.
+`stmVersion` is a string constant. Changes bump it; a player must refuse a
+version it does not know. Additional properties are rejected everywhere, so
+extensions require a version bump rather than silent vendor fields — which is
+why adding one optional field made this 0.2 rather than a quiet edit to 0.1.
+
+| Version | Change |
+| --- | --- |
+| 0.1 | The format as first published, 21 September 2026. |
+| 0.2 | Adds the optional `signLanguage[].activity` object. Nothing else changed: every valid 0.1 manifest is a valid 0.2 manifest, and a 0.1 manifest carrying `activity` is rejected, because a 0.1 reader would reject it too. Readers should accept both. |
 
 ## Relationship to standards
 

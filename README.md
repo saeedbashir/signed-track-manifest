@@ -72,7 +72,13 @@ stm run catalogue/sources.yaml --out out --simplify
 
 `stm spike` prints the cluster table — every detected person track, with its
 persistence, stability, size, motion ratio and score — so you can see why it
-chose what it chose.
+chose what it chose, and a one-line sparkline of the interpreter's signing
+activity over the clip.
+
+```sh
+# measure signing activity inside a rectangle on its own, as the manifest carries it
+stm activity path/to/briefing.mp4 --rect 1080,108,840,760 --json activity.json
+```
 
 ## Choosing titles
 
@@ -116,7 +122,12 @@ obtained are not measured and never will be: those are a person's call.
 6. **Produce** the signer track (H.264, ≤540p), the main track, and a poster.
 7. **Score confidence** from persistence, stability and motion. Below 0.7 the
    manifest flags the title and players should badge it.
-8. **Emit and validate** the manifest.
+8. **Measure activity**: hand and face motion inside the final crop, per second,
+   normalised to the title's own 95th percentile, published as integers 0..100.
+   Measured on the decided rectangle, so a hand-measured crop gets it too. The
+   player decides what "idle" means; the reference player offers an opt-in fade
+   while the interpreter is idle.
+9. **Emit and validate** the manifest.
 
 The hole is patched with ffmpeg's `delogo` interpolation softened by a blur.
 Never generative inpainting: it flickers between frames and looks worse than an
@@ -153,6 +164,7 @@ See [SPEC.md](SPEC.md). Schemas live in `src/stm/schemas/` and are what
 `validate-stm` enforces. The design decisions worth knowing:
 
 - `provenance` is required, closed (`human-interpreter` | `synthesised`), and has no default.
+- `activity` (0.2) is hand motion over time and nothing else. The producer publishes the number; the player sets the idle rule.
 - `syncOffsetMs` exists because interpretation lags speech; the player shifts, the pipeline never re-encodes.
 - `confidence` is public. Consumers pick their own threshold.
 - `signLanguage` is an array. ASL and BSL are different languages, not variants.
@@ -198,10 +210,11 @@ Dependencies and why each exists: [DEPENDENCIES.md](DEPENDENCIES.md).
 
 ## Status
 
-Version 0.1, built during the Build, Ship, Shape: Amazon Developer Hackathon
+Version 0.2, built during the Build, Ship, Shape: Amazon Developer Hackathon
 (September–October 2026) as the open-source companion to a Fire TV closed
-signing player. The format is young; expect 0.x changes. Open an issue if you
-build a player or a producer against it.
+signing player. The format is young; expect 0.x changes, each recorded in
+[CHANGELOG.md](CHANGELOG.md). Open an issue if you build a player or a producer
+against it.
 
 ## Licence
 

@@ -1,0 +1,97 @@
+{
+  "stmVersion": "0.1",
+  "id": "invalid-activity-on-0-1",
+  "title": "Invalid — a 0.1 manifest carrying the 0.2 activity field",
+  "durationMs": 1200000,
+  "source": {
+    "publisher": "Example Broadcaster",
+    "url": "https://example.org/programme/42",
+    "licence": "cc-by-4.0",
+    "attribution": "Example Broadcaster, CC BY 4.0."
+  },
+  "video": {
+    "main": {
+      "url": "https://cdn.example.org/42/main.mp4",
+      "width": 1440,
+      "height": 1080,
+      "codec": "h264"
+    },
+    "poster": "https://cdn.example.org/42/poster.jpg"
+  },
+  "signLanguage": [
+    {
+      "language": "bfi",
+      "languageLabel": "British Sign Language",
+      "provenance": "human-interpreter",
+      "extraction": {
+        "method": "detected-crop",
+        "sourceLayout": "side-panel",
+        "confidence": 0.97,
+        "cropRect": {
+          "x": 1440,
+          "y": 0,
+          "w": 480,
+          "h": 1080
+        },
+        "fillMethod": "none"
+      },
+      "track": {
+        "url": "https://cdn.example.org/42/signer-bfi.mp4",
+        "width": 240,
+        "height": 540,
+        "codec": "h264",
+        "syncOffsetMs": 250
+      },
+      "activity": {
+        "intervalMs": 1000,
+        "scale": "title-p95",
+        "values": [
+          0,
+          40,
+          90
+        ]
+      }
+    },
+    {
+      "language": "ase",
+      "languageLabel": "American Sign Language",
+      "provenance": "human-interpreter",
+      "extraction": {
+        "method": "manual-crop",
+        "sourceLayout": "corner-inset",
+        "confidence": 1.0,
+        "cropRect": {
+          "x": 1500,
+          "y": 700,
+          "w": 400,
+          "h": 360
+        },
+        "fillMethod": "interpolated-surround"
+      },
+      "track": {
+        "url": "https://cdn.example.org/42/signer-ase.mp4",
+        "width": 400,
+        "height": 360,
+        "codec": "h264",
+        "syncOffsetMs": 0
+      }
+    }
+  ],
+  "captions": [
+    {
+      "kind": "verbatim",
+      "language": "en-GB",
+      "url": "https://cdn.example.org/42/verbatim.en-GB.vtt",
+      "format": "webvtt"
+    },
+    {
+      "kind": "simplified",
+      "language": "en-GB",
+      "url": "https://cdn.example.org/42/simplified.en-GB.vtt",
+      "format": "webvtt",
+      "generatedBy": "amazon-bedrock",
+      "reviewed": true,
+      "reviewedBy": "A. Reviewer"
+    }
+  ]
+}

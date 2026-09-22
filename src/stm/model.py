@@ -18,7 +18,11 @@ from dataclasses import dataclass, replace
 from enum import StrEnum
 from typing import Any
 
-STM_VERSION = "0.1"
+#: The version this library writes.
+STM_VERSION = "0.2"
+#: The versions it reads. 0.2 adds the optional ``activity`` track and nothing else,
+#: so every valid 0.1 manifest is a valid 0.2 manifest.
+ACCEPTED_VERSIONS: tuple[str, ...] = ("0.1", "0.2")
 
 #: Below this extraction confidence a player should badge the title.
 LOW_CONFIDENCE_THRESHOLD = 0.7
@@ -161,6 +165,55 @@ class Extraction:
         }
 
 
+#: Closed. A second way of normalising is a new value here and in the schema.
+ACTIVITY_SCALES: tuple[str, ...] = ("title-p95",)
+
+
+@dataclass(frozen=True)
+class Activity:
+    """How much the interpreter moves, per interval, from t=0. Added in 0.2.
+
+    Integers 0..100, normalised per title so 100 is "as active as this
+    interpreter gets" and 0 is still. It describes hand motion and nothing else:
+    not meaning, not quality. The threshold for *idle* is the player's to set,
+    exactly as the threshold for a low ``confidence`` is.
+    """
+
+    values: Sequence[int]
+    interval_ms: int = 1000
+    scale: str = "title-p95"
+
+    def __post_init__(self) -> None:
+        if not self.values:
+            raise ValueError("activity needs at least one value")
+        if not 200 <= self.interval_ms <= 5000:
+            raise ValueError(f"activity interval must be 200..5000 ms, got {self.interval_ms}")
+        if self.scale not in ACTIVITY_SCALES:
+            raise ValueError(f"unknown activity scale {self.scale!r}")
+        bad = [v for v in self.values if not isinstance(v, int) or not 0 <= v <= 100]
+        if bad:
+            raise ValueError(f"activity values must be integers 0..100, got {bad[:3]}")
+
+    def at(self, position_ms: float) -> int:
+        """The value covering ``position_ms``. Before the start is 0; past the end
+        holds the last value, because a short array is padded, never extrapolated."""
+        if position_ms < 0:
+            return 0
+        i = int(position_ms // self.interval_ms)
+        return int(self.values[min(i, len(self.values) - 1)])
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"intervalMs": self.interval_ms, "scale": self.scale, "values": list(self.values)}
+
+    @classmethod
+    def from_dict(cls, d: Mapping[str, Any]) -> Activity:
+        return cls(
+            values=[int(v) for v in d["values"]],
+            interval_ms=int(d.get("intervalMs", 1000)),
+            scale=str(d.get("scale", "title-p95")),
+        )
+
+
 @dataclass(frozen=True)
 class SignTrack:
     """One sign language track. ``provenance`` has no default on purpose."""
@@ -172,6 +225,7 @@ class SignTrack:
     sync_offset_ms: int = 0
     extraction: Extraction | None = None
     generated_by: str | None = None
+    activity: Activity | None = None
 
     def __post_init__(self) -> None:
         if len(self.language) != 3 or not self.language.isalpha() or not self.language.islower():
@@ -201,6 +255,7 @@ class SignTrack:
                     **self.track.to_dict(),
                     "syncOffsetMs": self.sync_offset_ms,
                 },
+                "activity": self.activity.to_dict() if self.activity else None,
             }
         )
 
@@ -281,6 +336,13 @@ class TitleManifest:
     sign_language: Sequence[SignTrack] = ()
     captions: Sequence[Caption] = ()
     stm_version: str = STM_VERSION
+
+    def __post_init__(self) -> None:
+        if self.stm_version not in ACCEPTED_VERSIONS:
+            raise ValueError(f"unknown stmVersion {self.stm_version!r}; know {ACCEPTED_VERSIONS}")
+        if self.stm_version == "0.1" and any(t.activity for t in self.sign_language):
+            # The version has to mean something: a 0.1 reader would reject this file.
+            raise ValueError("activity is a 0.2 field; write the manifest as 0.2 to carry it")
 
     @property
     def min_confidence(self) -> float | None:

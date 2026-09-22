@@ -9,8 +9,9 @@ from collections.abc import Sequence
 from dataclasses import replace
 from pathlib import Path
 
-from stm.model import FillMethod
+from stm.model import FillMethod, Rect
 from stm_pipeline import ffmpeg
+from stm_pipeline.activity import idle_fraction, measure_activity, sparkline
 from stm_pipeline.config import PipelineConfig
 from stm_pipeline.detect.base import Detector
 from stm_pipeline.detect.models import MODELS, ensure_model
@@ -135,6 +136,16 @@ def _parser() -> argparse.ArgumentParser:
     )
     _add_common(t)
 
+    a = sub.add_parser(
+        "activity",
+        help="measure signing activity inside a rectangle, per second, as the manifest carries it",
+    )
+    a.add_argument("clip", type=Path)
+    a.add_argument("--rect", required=True, help="x,y,w,h in source pixels")
+    a.add_argument("--interval-ms", type=int, default=1000)
+    a.add_argument("--json", type=Path, help="write the activity object here")
+    _add_common(a)
+
     c = sub.add_parser("catalogue", help="index manifests into a catalogue")
     c.add_argument("manifests", nargs="+", type=Path)
     c.add_argument("-o", "--out", type=Path, required=True)
@@ -236,8 +247,36 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(format_cluster_table(d.ranked, d.chosen.cluster_id if d.chosen else None))
         print(f"\nlayout: {d.layout.kind}  confidence: {d.confidence:.2f}")
         print(f"rect (source px): {json.dumps(d.rect_source.to_dict())}")
+        if config.activity:
+            m = measure_activity(args.clip, d.rect_source, config)
+            print(
+                f"activity: |{sparkline(m.activity.values)}|  "
+                f"p95 {m.p95:.1f}  idle<20: {idle_fraction(m.activity.values):.0%}"
+            )
         for k, v in result.outputs.items():
             print(f"{k:28} {v}")
+        return 0
+
+    if args.cmd == "activity":
+        config = _config(args)
+        try:
+            x, y, w, h = (int(v) for v in args.rect.split(","))
+            rect = Rect(x, y, w, h)
+        except ValueError as exc:
+            print(f"error: --rect wants x,y,w,h in source pixels ({exc})", file=sys.stderr)
+            return 1
+        m = measure_activity(args.clip, rect, config, args.interval_ms)
+        print(f"|{sparkline(m.activity.values)}|")
+        print(
+            f"{len(m.activity.values)} intervals of {m.activity.interval_ms} ms; "
+            f"p95 motion {m.p95:.2f} became 100; {m.samples} sampled frames; "
+            f"idle (<20): {idle_fraction(m.activity.values):.0%}"
+        )
+        if args.json:
+            args.json.write_text(
+                json.dumps(m.activity.to_dict(), separators=(",", ":")) + "\n", encoding="utf-8"
+            )
+            print(f"wrote {args.json}")
         return 0
 
     if args.cmd == "harness":

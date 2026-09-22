@@ -74,6 +74,11 @@ class PipelineConfig:
     panel_std_threshold: float = 12.0  # spatial std of the mean gray image in the panel
     full_height_fraction: float = 0.85
 
+    # Signing activity (published in the manifest; the player sets the idle rule)
+    activity: bool = True
+    activity_interval_ms: int = 1000
+    activity_percentile: float = 95.0  # the motion value that becomes 100, per title
+
     # Outputs
     signer_max_height: int = 540
     signer_crf: int = 23

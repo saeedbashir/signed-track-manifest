@@ -27,6 +27,7 @@ def test_valid_catalogue_example() -> None:
         "invalid-missing-provenance.json",
         "invalid-reviewed-without-reviewer.json",
         "invalid-synthesised-with-extraction.json",
+        "invalid-activity-on-0-1.json",
     ],
 )
 def test_invalid_examples_fail(name: str) -> None:
@@ -121,3 +122,60 @@ def test_cli_exit_codes(capsys: pytest.CaptureFixture[str]) -> None:
     out = capsys.readouterr().out
     assert "FAIL" in out
     assert "provenance" in out
+
+
+# --- 0.2: the activity track -------------------------------------------------
+
+
+def test_both_versions_are_read() -> None:
+    v01 = load_example("side-panel.json")
+    v02 = load_example("corner-inset.json")
+    assert v01["stmVersion"] == "0.1" and v02["stmVersion"] == "0.2"
+    assert is_valid(validate_title(v01)) and is_valid(validate_title(v02))
+
+
+def test_unknown_version_is_refused() -> None:
+    data = _base()
+    data["stmVersion"] = "0.3"
+    assert not is_valid(validate_title(data))
+
+
+def test_activity_is_optional_in_0_2() -> None:
+    data = _base()
+    del data["signLanguage"][0]["activity"]
+    assert is_valid(validate_title(data))
+
+
+def test_activity_is_rejected_in_0_1() -> None:
+    # The version has to mean something: a 0.1 reader would reject this file.
+    data = _base()
+    data["stmVersion"] = "0.1"
+    issues = validate_title(data)
+    assert not is_valid(issues)
+    assert any("activity" in i.message for i in issues)
+
+
+@pytest.mark.parametrize(
+    "patch",
+    [
+        {"values": []},
+        {"values": [0, 101]},
+        {"values": [0, -1]},
+        {"values": [0, 50.5]},
+        {"intervalMs": 100},
+        {"intervalMs": 6000},
+        {"scale": "absolute"},
+        {"extra": True},
+    ],
+)
+def test_activity_shape_is_enforced(patch: dict[str, Any]) -> None:
+    data = _base()
+    data["signLanguage"][0]["activity"].update(patch)
+    assert not is_valid(validate_title(data))
+
+
+def test_catalogue_reads_both_versions() -> None:
+    cat = load_example("catalogue.json")
+    assert is_valid(validate_catalogue(cat))
+    cat["stmVersion"] = "0.1"
+    assert is_valid(validate_catalogue(cat))

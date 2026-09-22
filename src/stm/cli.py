@@ -14,7 +14,7 @@ from stm.schema import Issue, is_valid, validate_catalogue, validate_title
 def _parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="validate-stm",
-        description="Validate Signed Track Manifest files against the STM 0.1 schema.",
+        description="Validate Signed Track Manifest files against the STM schema (0.1 and 0.2).",
     )
     p.add_argument("files", nargs="+", type=Path, help="manifest JSON files")
     p.add_argument(

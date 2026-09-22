@@ -25,6 +25,7 @@ from stm.model import (
 )
 from stm.schema import is_valid, validate_title
 from stm_pipeline import ffmpeg
+from stm_pipeline.activity import ActivityMeasurement, measure_activity
 from stm_pipeline.analyze import Analysis, analyze
 from stm_pipeline.captions import read_as_vtt
 from stm_pipeline.confidence import confidence as confidence_of
@@ -200,9 +201,17 @@ def process_title(
     video = fetch_media(entry, work_dir)
     info = ffmpeg.probe(video)
     decision = decide(video, detector, config, manual=entry)
-    (title_dir / "analysis.json").write_text(
-        json.dumps(decision.to_dict(), indent=2) + "\n", encoding="utf-8"
-    )
+
+    # Activity is measured on the decided rectangle, for hand-measured and
+    # detected crops alike — the manual path never ran analysis, so this is
+    # the only pass that sees how the interpreter moves over time.
+    measurement: ActivityMeasurement | None = None
+    if config.activity:
+        measurement = measure_activity(video, decision.rect_source, config)
+
+    report = decision.to_dict()
+    report["activity"] = measurement.to_dict() if measurement else None
+    (title_dir / "analysis.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
 
     # Signer layer.
     signer_name = f"signer-{entry.sign_language}.mp4"
@@ -283,6 +292,7 @@ def process_title(
                     fill_method=fill_method,
                 ),
                 track=VideoAsset(signer_name, signer_info.width, signer_info.height, "h264"),
+                activity=measurement.activity if measurement else None,
             )
         ],
         captions=captions,

@@ -1,5 +1,5 @@
 {
-  "stmVersion": "0.1",
+  "stmVersion": "0.2",
   "titles": [
     {
       "id": "example-corner-inset",
@@ -7,7 +7,9 @@
       "durationMs": 486000,
       "poster": "example-corner-inset/poster.jpg",
       "manifestUrl": "example-corner-inset/manifest.json",
-      "signLanguages": ["ase"],
+      "signLanguages": [
+        "ase"
+      ],
       "confidence": 0.91
     },
     {
@@ -16,7 +18,10 @@
       "durationMs": 1200000,
       "poster": "https://cdn.example.org/42/poster.jpg",
       "manifestUrl": "https://cdn.example.org/42/manifest.json",
-      "signLanguages": ["bfi", "ase"],
+      "signLanguages": [
+        "bfi",
+        "ase"
+      ],
       "confidence": 0.97
     }
   ]
