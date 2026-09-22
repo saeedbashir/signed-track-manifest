@@ -1,7 +1,10 @@
 # Ground truth for Scottish Parliament TV, BSL-interpreted proceedings.
 #
 # Read off a coordinate grid over a clean frame at t=20s of a 120s excerpt taken
-# from the publisher's own HLS stream at 1920x1080.
+# from the publisher's own HLS stream at 1920x1080. The same rectangle was then
+# checked on two complete sessions at seven points each (t = 2 s to the last
+# minute): the panel side reads the same flat backdrop from x=1080 at every one.
+# It is the Parliament's house layout, not a per-event measurement.
 #
 # The layout is a true side panel: the chamber picture occupies x 0-1080 and the
 # interpreter's purple panel x 1080-1920, both between y=108 and y=868. Above and
@@ -16,3 +19,12 @@ clips:
       Scottish Parliament Copyright Licence. The panel boundary is a hard,
       high-contrast edge against a picture that is neither static nor uniform,
       which is the opposite of the Boston corner insets.
+  - clip: ../../sp-download/sp-b-full.mp4
+    rect: {x: 1080, y: 108, w: 840, h: 760}
+    notes: >-
+      First Minister's Questions (Backbench Members) (BSL), 15 September 2026 —
+      the complete 1917 s session, same licence. Here to answer whether a whole
+      broadcast bounds better than a two-minute excerpt. It does not: the
+      automatic rectangle is {1038, 84, 882, 996} on both, IoU 0.727 on both,
+      measured 2026-09-22. Growth stops at the branding bands and 42 px into the
+      chamber at any length, because those are the edges it can see.
