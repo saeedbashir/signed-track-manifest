@@ -264,6 +264,13 @@ def process_title(
         )
         cues, summary = align(contributions, spoken)
         report["alignment"] = summary.to_dict()
+        # The analysis report stays out of the published title, so this is the
+        # only place a Batch log shows how the alignment went.
+        print(
+            f"  captions: {len(contributions)} contributions, {summary.report_words} words; "
+            f"{summary.anchored} anchored ({summary.anchored_fraction:.0%}), "
+            f"{summary.events} stage directions, {summary.unheard} unheard; {summary.cues} cues"
+        )
         (title_dir / "analysis.json").write_text(
             json.dumps(report, indent=2) + "\n", encoding="utf-8"
         )
