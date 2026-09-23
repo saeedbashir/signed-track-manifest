@@ -185,8 +185,9 @@ def test_a_stage_direction_gets_its_own_short_cue_not_the_whole_gap() -> None:
     ]
     cues, _ = align(contributions, heard)
     ev = next(c for c in cues if c.text == "[Applause.]")
-    # Centred in the 20.0-38.4 gap: nothing says where in it the applause fell.
-    assert 24.0 <= ev.start_s <= 30.0
+    # Applause begins as "Slovenia." ends (the picture shows the chamber
+    # clapping within a second), not in the middle of the 20.0-38.4 gap.
+    assert 20.0 <= ev.start_s <= 21.0
     assert ev.duration_s <= MAX_EVENT_S + 0.01
     assert ev.end_s <= 38.4
 

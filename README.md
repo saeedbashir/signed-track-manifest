@@ -156,8 +156,9 @@ puts the Report's words on the audio's clock and publishes the words unchanged:
    89 % of 4,855 words on a 34-minute session. The rest are placed by rule: a
    word the editor tidied clings to the speech before it at an ordinary rate
    rather than being smeared across a silence; words leading into the next
-   speaker cling to that; a stage direction (`[Applause.]`) takes the middle
-   of the gap it lives in, for at most five seconds.
+   speaker cling to that; a stage direction (`[Applause.]`) begins as the
+   speech before it ends — the picture shows the chamber clapping within a
+   second — and runs for at most five seconds.
 3. **Cues.** Two lines of 42, one to six seconds, split at sentence and
    clause ends, never across a change of speaker or paragraph. The speaker is
    named on the first cue of each contribution.

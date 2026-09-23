@@ -56,6 +56,8 @@ EVENT_WEIGHT = 12
 MAX_WORD_S = 1.0
 #: A silence this long inside a paragraph ends the cue, because the speaker stopped.
 PAUSE_S = 1.5
+#: How long after the last word before the room reacts.
+EVENT_LAG_S = 0.4
 
 _EVENT = re.compile(r"\[[^\]]*\]")
 _SENTENCE_END = re.compile(r"[.!?][\"'”’)\]]*$")
@@ -148,8 +150,8 @@ def time_words(report: list[ReportWord], matches: list[TimedWord | None]) -> lis
     gap is roomy the words cling to the anchor before them at an ordinary rate
     rather than being smeared across the silence. Speech that follows a stage
     direction leads into the next anchor instead, so it clings to that. And a
-    stage direction has no speech at all: it takes the middle of whatever the
-    gap has left, for at most :data:`MAX_EVENT_S`.
+    stage direction has no speech at all: it begins as the speech before it
+    ends and runs for at most :data:`MAX_EVENT_S`.
     """
     n = len(report)
     if n == 0:
@@ -206,12 +208,16 @@ def time_words(report: list[ReportWord], matches: list[TimedWord | None]) -> lis
         if after:
             spread(after[0], after[-1] + 1, a_start, t1)
         if events:
+            # Applause and interruptions begin the moment the speech before them
+            # ends — checked against the picture: the chamber is clapping within
+            # a second of "Slovenia." — so an event starts there, not in the
+            # middle of whatever silence follows it.
             window = min(MAX_EVENT_S, max(1.0, (a_start - b_end) / len(events)))
-            centre = (b_end + a_start) / 2
-            start = max(b_end, centre - window * len(events) / 2)
+            start = b_end + EVENT_LAG_S
             for k in events:
-                timed[k] = TimedReportWord(report[k], start, start + window, False)
-                start += window
+                end = min(start + window, a_start) if a_start > start else start + 1.0
+                timed[k] = TimedReportWord(report[k], start, max(end, start + 1.0), False)
+                start = end
 
     if not anchors:
         spread(0, n, 0.0, _natural_seconds(report))
