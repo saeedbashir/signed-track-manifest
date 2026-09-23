@@ -305,6 +305,10 @@ def segment(timed: list[TimedReportWord], contributions: list[Contribution]) -> 
             too_long = not _fits(prospective)
             too_slow = t.end - buf[0].start > MAX_CUE_S
             paused = t.start - buf[-1].end > PAUSE_S
+            if paused and len(buf) == 1 and not too_slow:
+                # "I … [hesitates] … am grateful": a speaker who has said one
+                # word and stopped has started a sentence, not finished one.
+                paused = False
             carry: list[TimedReportWord] = []
             if (too_long or too_slow) and not paused and ends_unit and len(buf) >= 4:
                 # "…wee day trip to" / "Wales?" reads badly; the last word of the

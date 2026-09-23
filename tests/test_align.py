@@ -280,6 +280,16 @@ def test_a_slow_sentences_last_word_comes_down_with_company() -> None:
         assert len(c.text.split()) >= 2, c.text
 
 
+def test_a_lone_first_word_rides_through_a_hesitation() -> None:
+    report = [Contribution("A", ["I am grateful to the member for that question."])]
+    heard = [
+        TimedWord("I", 10.0, 10.2),
+        *spoken("am grateful to the member for that question", start=12.5),
+    ]
+    cues, _ = align(report, heard)
+    assert cues[0].text.startswith("A: I am grateful"), cues[0].text
+
+
 def test_no_cue_hangs_longer_than_the_cap() -> None:
     report = [Contribution("A", ["session. Next question is from Douglas Ross."])]
     heard = [
