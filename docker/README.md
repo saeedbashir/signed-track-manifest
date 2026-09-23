@@ -10,6 +10,14 @@ judge to install. The workflow assumes an IAM role over GitHub's OIDC token
 (repository variables `AWS_ROLE_ARN` and `ECR_REPOSITORY`); it skips itself
 where those are unset, so a fork does not fail.
 
+The role's trust condition matches the token's `sub` claim, and GitHub now
+writes that claim with the owner's and repository's numeric ids —
+`repo:saeedbashir@5606473/signed-track-manifest@1381415665:ref:refs/heads/main`
+— so the pattern `repo:owner/name:*` from most examples no longer matches and
+STS answers "Not authorized to perform sts:AssumeRoleWithWebIdentity" with no
+further hint. CloudTrail's record of the failed call shows the exact `sub`;
+the trust policy allows both forms.
+
 On Batch the container has no local files. `stm run s3://bucket/sources.yaml`
 fetches the list, `url: s3://…` on an entry fetches the video, and with
 `STM_ASSETS_BUCKET` set (the job definition sets it) each finished title is
