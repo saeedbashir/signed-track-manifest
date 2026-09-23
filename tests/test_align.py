@@ -218,6 +218,67 @@ def test_speech_after_a_stage_direction_leads_into_the_next_anchor() -> None:
     assert ev.end_s <= lead.start_s + 1e-9
 
 
+def test_a_new_speakers_unheard_opening_leads_into_their_first_anchor() -> None:
+    # The Report prints "As other members have done,"; the member said "Thank
+    # you very much." Those words belong to the new speaker, at 1819, not to the
+    # end of the First Minister's answer at 1813.
+    contributions = [
+        Contribution("FM", ["a positive vision of independence for Scotland."]),
+        Contribution("ACH", ["As other members have done, I, too, extend condolences."]),
+    ]
+    heard = spoken("a positive vision of independence for Scotland", start=1810.0) + spoken(
+        "Alex Cole-Hamilton thank you very much I too extend condolences", start=1819.3
+    )
+    cues, _ = align(contributions, heard)
+    opening = next(c for c in cues if c.text.startswith("ACH: As other"))
+    assert opening.start_s > 1816.0
+    assert cues[0].end_s < 1815.0
+
+
+def test_a_pause_the_recogniser_gave_to_a_word_is_not_a_long_cue() -> None:
+    report = [Contribution("A", ["so will the First Minister please answer."])]
+    heard = [
+        TimedWord("so", 382.0, 382.5),
+        TimedWord("will", 382.6, 382.9),
+        TimedWord("the", 382.9, 386.9),  # four seconds of silence handed to "the"
+        TimedWord("First", 386.9, 387.2),
+        TimedWord("Minister", 387.2, 387.6),
+        TimedWord("please", 387.6, 387.9),
+        TimedWord("answer", 387.9, 388.3),
+    ]
+    timed = time_words(tokenise(report), match(tokenise(report), heard))
+    the = next(t for t in timed if t.word.text == "the")
+    assert the.end <= 383.9 + 1e-9
+
+
+def test_a_pause_inside_a_paragraph_ends_the_cue() -> None:
+    report = [Contribution("A", ["so will the First Minister please answer."])]
+    heard = spoken("so will the", start=382.0) + spoken("First Minister please answer", start=386.9)
+    cues, _ = align(report, heard)
+    assert cues[0].text == "A: so will the"
+    assert cues[1].start_s >= 386.9
+
+
+def test_a_sentences_last_word_is_not_left_alone() -> None:
+    text = (
+        "Which of those four priorities were advanced by his wee day trip to Wales? "
+        "The next sentence follows."
+    )
+    cues, _ = align([Contribution("A", [text])], spoken(text.replace("?", "").replace(".", "")))
+    for c in cues:
+        assert len(c.text.split()) >= 2, c.text
+    wales = next(c for c in cues if "Wales?" in c.text)
+    assert len(wales.text.split()) >= 2
+
+
+def test_a_slow_sentences_last_word_comes_down_with_company() -> None:
+    # Five words at a slow pace fill the six seconds; the sixth ends the sentence.
+    text = "Excellency Sanja Stiglic ambassador of the Republic of Slovenia."
+    cues, _ = align([Contribution("A", [text])], spoken(text.replace(".", ""), wps=1.35))
+    for c in cues:
+        assert len(c.text.split()) >= 2, c.text
+
+
 def test_no_cue_hangs_longer_than_the_cap() -> None:
     report = [Contribution("A", ["session. Next question is from Douglas Ross."])]
     heard = [

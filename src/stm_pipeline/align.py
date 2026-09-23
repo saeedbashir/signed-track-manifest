@@ -51,6 +51,11 @@ MAX_EVENT_S = 5.0
 FALLBACK_WPS = 2.5
 #: A stage direction weighs this many characters when a gap is shared out.
 EVENT_WEIGHT = 12
+#: No spoken word lasts longer than this; a recogniser that hands the following
+#: pause to the word before it is corrected here, so a cue ends when speech does.
+MAX_WORD_S = 1.0
+#: A silence this long inside a paragraph ends the cue, because the speaker stopped.
+PAUSE_S = 1.5
 
 _EVENT = re.compile(r"\[[^\]]*\]")
 _SENTENCE_END = re.compile(r"[.!?][\"'”’)\]]*$")
@@ -154,7 +159,8 @@ def time_words(report: list[ReportWord], matches: list[TimedWord | None]) -> lis
     for i in anchors:
         m = matches[i]
         assert m is not None
-        timed[i] = TimedReportWord(report[i], m.start, max(m.end, m.start + 0.05), True)
+        end = min(max(m.end, m.start + 0.05), m.start + MAX_WORD_S)
+        timed[i] = TimedReportWord(report[i], m.start, end, True)
 
     def spread(lo: int, hi: int, t0: float, t1: float) -> None:
         """report[lo:hi] across [t0, t1] by weight, in order."""
@@ -167,33 +173,45 @@ def time_words(report: list[ReportWord], matches: list[TimedWord | None]) -> lis
             at += dur
 
     def place(lo: int, hi: int, t0: float, t1: float) -> None:
-        """A run of unmatched words between times t0 and t1."""
-        run = list(range(lo, hi))
-        events = [k for k in run if report[k].is_event]
-        if not events:
-            need = _natural_seconds([report[k] for k in run])
+        """A run of unmatched words between times t0 and t1.
+
+        Up to the first stage direction or change of speaker the words are the
+        previous speaker's, said straight after the anchor before them; from
+        there on they lead into the anchor after. Stage directions take the
+        middle of what is left.
+        """
+        prev_c = report[lo - 1].contribution
+        split = next(
+            (k for k in range(lo, hi) if report[k].is_event or report[k].contribution != prev_c),
+            hi,
+        )
+        before = list(range(lo, split))
+        after = [k for k in range(split, hi) if not report[k].is_event]
+        events = [k for k in range(lo, hi) if report[k].is_event]
+        if not events and not after:
+            need = _natural_seconds([report[k] for k in before])
             if t1 - t0 > 2 * need + 1.0:
                 spread(lo, hi, t0, t0 + need)  # cling to the speech before
             else:
                 spread(lo, hi, t0, t1)
             return
-        before = [k for k in run if k < events[0] and not report[k].is_event]
-        after = [k for k in run if k > events[-1] and not report[k].is_event]
-        b_end = t0 + _natural_seconds([report[k] for k in before]) if before else t0
-        a_start = t1 - _natural_seconds([report[k] for k in after]) if after else t1
+        nb = _natural_seconds([report[k] for k in before])
+        na = _natural_seconds([report[k] for k in after])
+        if t1 - t0 < nb + na + 1.0 * len(events):
+            spread(lo, hi, t0, t1)  # cramped: in order, sharing what there is
+            return
+        b_end, a_start = t0 + nb, t1 - na
         if before:
-            spread(before[0], before[-1] + 1, t0, min(b_end, t1))
+            spread(before[0], before[-1] + 1, t0, b_end)
         if after:
-            spread(after[0], after[-1] + 1, max(a_start, t0), t1)
-        free0, free1 = min(b_end, t1), max(a_start, t0)
-        if free1 < free0:
-            free0, free1 = t0, t1
-        window = min(MAX_EVENT_S, max(1.0, (free1 - free0) / len(events)))
-        centre = (free0 + free1) / 2
-        start = max(free0, centre - window * len(events) / 2)
-        for k in events:
-            timed[k] = TimedReportWord(report[k], start, start + window, False)
-            start += window
+            spread(after[0], after[-1] + 1, a_start, t1)
+        if events:
+            window = min(MAX_EVENT_S, max(1.0, (a_start - b_end) / len(events)))
+            centre = (b_end + a_start) / 2
+            start = max(b_end, centre - window * len(events) / 2)
+            for k in events:
+                timed[k] = TimedReportWord(report[k], start, start + window, False)
+                start += window
 
     if not anchors:
         spread(0, n, 0.0, _natural_seconds(report))
@@ -259,11 +277,18 @@ def segment(timed: list[TimedReportWord], contributions: list[Contribution]) -> 
         cues.append(Cue(len(cues) + 1, first.start, buf[-1].end, _break_lines(text)))
         buf.clear()
 
-    for t in timed:
+    for i, t in enumerate(timed):
         if t.word.is_event:
             flush()
             cues.append(Cue(len(cues) + 1, t.start, max(t.end, t.start + 1.0), t.word.text))
             continue
+        nxt = timed[i + 1] if i + 1 < len(timed) else None
+        ends_unit = bool(_SENTENCE_END.search(t.word.text)) or (
+            nxt is None
+            or nxt.word.is_event
+            or (nxt.word.contribution, nxt.word.paragraph)
+            != (t.word.contribution, t.word.paragraph)
+        )
         if buf and (
             t.word.contribution != buf[0].word.contribution
             or t.word.paragraph != buf[0].word.paragraph
@@ -273,8 +298,17 @@ def segment(timed: list[TimedReportWord], contributions: list[Contribution]) -> 
             prospective = prefix(buf[0]) + " ".join(x.word.text for x in buf) + " " + t.word.text
             too_long = not _fits(prospective)
             too_slow = t.end - buf[0].start > MAX_CUE_S
-            if too_long or too_slow:
+            paused = t.start - buf[-1].end > PAUSE_S
+            carry: list[TimedReportWord] = []
+            if (too_long or too_slow) and not paused and ends_unit and len(buf) >= 4:
+                # "…wee day trip to" / "Wales?" reads badly; the last word of the
+                # full cue comes down to keep the sentence's end company.
+                carry.append(buf.pop())
+                if len(carry[0].word.text) <= 3 and len(buf) >= 4:
+                    carry.insert(0, buf.pop())
+            if too_long or too_slow or paused:
                 flush()
+                buf.extend(carry)
         buf.append(t)
         joined = " ".join(x.word.text for x in buf)
         if (_SENTENCE_END.search(t.word.text) and len(joined) >= 20) or (
@@ -402,7 +436,6 @@ def machine_cues(spoken: list[TimedWord]) -> list[Cue]:
     """
     cues: list[Cue] = []
     buf: list[TimedWord] = []
-    max_chars = MAX_LINE_CHARS * MAX_LINES
 
     def flush() -> None:
         if buf:

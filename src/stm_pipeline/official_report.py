@@ -88,7 +88,9 @@ def parse_official_report(page: str) -> list[Contribution]:
     pending_clock: str | None = None
     for m in _PARAGRAPH.finditer(body):
         attrs = m.group("attrs")
-        text = _clean(m.group("body"))
+        # One page printed the speaker's colon at the start of the speech
+        # paragraph ("<p><span>: I have always…"); the colon is not speech.
+        text = _clean(m.group("body")).lstrip(": ").strip()
         if 'id="orscontributions_' in attrs:
             # The speaker is the <strong> element; the share widget beside it is not.
             strong = _SPEAKER.search(m.group("body"))

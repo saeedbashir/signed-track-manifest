@@ -18,7 +18,7 @@ PAGE = """
 <p>When John Swinney became First Minister in May 2024, he promised to lead.</p>
 <p>Second paragraph of the same speaker.</p>
 <p id="orscontributions_M2110E489P990C3100815"> <div> <strong> <a name="2110" href="/msps/x">The First Minister (John Swinney)</a> </strong> </div> </p>
-<p>One of the many elements&nbsp;of the Government.</p>
+<p><span class="or-bill-section-bold">: One of the many elements&nbsp;of the Government.</span></p>
 </div> <!-- Previous/Next navigation --> <hr> <div class="row"> <div class="col-sm-6"> <p class="h5">Previous</p>
 <a href="?meeting=20233&amp;iob=225803"><span>General Question Time</span></a> </div>
 <div class="col-sm-6"> <p class="h5">Next</p> <a href="?iob=225819"><span>Programme for International Student Assessment 2025</span></a> </div> </div>
