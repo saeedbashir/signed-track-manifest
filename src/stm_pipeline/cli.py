@@ -12,6 +12,10 @@ from pathlib import Path
 from stm.model import FillMethod, Rect
 from stm_pipeline import ffmpeg
 from stm_pipeline.activity import idle_fraction, measure_activity, sparkline
+from stm_pipeline.align import align, machine_cues, to_webvtt
+from stm_pipeline.asr import DEFAULT_MODEL as ASR_DEFAULT_MODEL
+from stm_pipeline.asr import KNOWN_MODELS as ASR_MODELS
+from stm_pipeline.asr import generated_by, transcribe_cached
 from stm_pipeline.config import PipelineConfig
 from stm_pipeline.detect.base import Detector
 from stm_pipeline.detect.models import MODELS, ensure_model
@@ -24,6 +28,7 @@ from stm_pipeline.ingest import (
     fetch_media,
     load_sources,
 )
+from stm_pipeline.official_report import fetch_official_report, parse_official_report
 from stm_pipeline.run import NoSignerFoundError, build_catalogue, process_title
 from stm_pipeline.simplify import DEFAULT_MODEL, KNOWN_MODELS, BedrockSimplifier, NullSimplifier
 from stm_pipeline.spike import format_cluster_table, spike
@@ -145,6 +150,32 @@ def _parser() -> argparse.ArgumentParser:
     a.add_argument("--interval-ms", type=int, default=1000)
     a.add_argument("--json", type=Path, help="write the activity object here")
     _add_common(a)
+
+    cap = sub.add_parser("captions", help="caption tracks from a transcript page or from speech")
+    capsub = cap.add_subparsers(dest="captions_cmd", required=True)
+    ca = capsub.add_parser(
+        "align",
+        help="the publisher's transcript (Official Report page or file) on the audio's clock, "
+        "as WebVTT",
+    )
+    ca.add_argument("video", type=Path)
+    ca.add_argument("--report", required=True, help="transcript page URL or saved HTML")
+    ca.add_argument("-o", "--out", type=Path, required=True)
+    ca.add_argument(
+        "--work", type=Path, default=Path("work"), help="where audio and recognition are cached"
+    )
+    ca.add_argument("--model", choices=ASR_MODELS, default=ASR_DEFAULT_MODEL)
+    ca.add_argument("--language", default="en")
+    ct = capsub.add_parser(
+        "transcribe",
+        help="a machine transcript as WebVTT, for content with no written record "
+        "(always reviewed:false)",
+    )
+    ct.add_argument("video", type=Path)
+    ct.add_argument("-o", "--out", type=Path, required=True)
+    ct.add_argument("--work", type=Path, default=Path("work"))
+    ct.add_argument("--model", choices=ASR_MODELS, default=ASR_DEFAULT_MODEL)
+    ct.add_argument("--language", default="en")
 
     c = sub.add_parser("catalogue", help="index manifests into a catalogue")
     c.add_argument("manifests", nargs="+", type=Path)
@@ -317,6 +348,50 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.json.write_text(
                 json.dumps([r.to_dict() for r in results], indent=2) + "\n", encoding="utf-8"
             )
+        return 0
+
+    if args.cmd == "captions":
+        work = args.work / args.video.stem
+        try:
+            spoken = transcribe_cached(args.video, work, args.model, args.language)
+        except RuntimeError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 2
+        if args.captions_cmd == "align":
+            page = fetch_official_report(args.report, work)
+            contributions = parse_official_report(page)
+            if not contributions:
+                print("error: no contributions found in the transcript page", file=sys.stderr)
+                return 1
+            cues, summary = align(contributions, spoken)
+            args.out.parent.mkdir(parents=True, exist_ok=True)
+            args.out.write_text(
+                to_webvtt(
+                    cues,
+                    "Text: the publisher's Official Report, unchanged. "
+                    "Timing: aligned automatically to the audio by signed-track-manifest.",
+                ),
+                encoding="utf-8",
+            )
+            s = summary
+            print(
+                f"{len(contributions)} contributions, {s.report_words} words; "
+                f"{s.anchored} anchored to speech ({s.anchored_fraction:.0%}), "
+                f"{s.events} stage directions; {s.cues} cues -> {args.out}"
+            )
+            return 0
+        cues = machine_cues(spoken)
+        args.out.parent.mkdir(parents=True, exist_ok=True)
+        args.out.write_text(
+            to_webvtt(
+                cues, f"Machine transcript: {generated_by(args.model)}. Not checked by a person."
+            ),
+            encoding="utf-8",
+        )
+        print(
+            f"{len(spoken)} words, {len(cues)} cues -> {args.out}  "
+            f"(generatedBy {generated_by(args.model)})"
+        )
         return 0
 
     if args.cmd == "catalogue":

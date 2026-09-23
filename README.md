@@ -68,6 +68,12 @@ stm run catalogue/sources.yaml --out out --work work
 
 # ...and generate a simplified caption track alongside the verbatim one
 stm run catalogue/sources.yaml --out out --simplify
+
+# a publisher's transcript page as a verbatim caption track, timed to the audio
+stm captions align session.mp4 --report "https://…/official-report/…?meeting=…&iob=…" -o verbatim.en.vtt
+
+# a machine transcript where no written record exists (always labelled as machine text)
+stm captions transcribe briefing.mp4 -o machine.en.vtt
 ```
 
 `stm spike` prints the cluster table — every detected person track, with its
@@ -132,6 +138,39 @@ obtained are not measured and never will be: those are a person's call.
 The hole is patched with ffmpeg's `delogo` interpolation softened by a blur.
 Never generative inpainting: it flickers between frames and looks worse than an
 honest soft patch.
+
+## Captions from a published transcript
+
+Most broadcast streams of signed programmes carry no text track — the Scottish
+Parliament's do not — but the publisher often has something better than a
+transcript: an *edited-verbatim* record, written by people, with speakers named
+and stage directions kept. The Official Report is that. What it lacks is time.
+
+`stm captions align` (and `official_report:` on a source entry, for `stm run`)
+puts the Report's words on the audio's clock and publishes the words unchanged:
+
+1. **A clock.** `faster-whisper` (CPU, `small`, about five times real time)
+   recognises the audio with word timestamps. Its *text* is thrown away.
+2. **Alignment.** A true longest common subsequence of the Report's words
+   against the recognised words gives an anchor for every word both agree on —
+   89 % of 4,855 words on a 34-minute session. The rest are placed by rule: a
+   word the editor tidied clings to the speech before it at an ordinary rate
+   rather than being smeared across a silence; words leading into the next
+   speaker cling to that; a stage direction (`[Applause.]`) takes the middle
+   of the gap it lives in, for at most five seconds.
+3. **Cues.** Two lines of 42, one to six seconds, split at sentence and
+   clause ends, never across a change of speaker or paragraph. The speaker is
+   named on the first cue of each contribution.
+
+The track is human text on machine timing, and is labelled that way: no
+`generatedBy` (the text was not generated), and a `NOTE` in the file saying
+where the words and the timing each came from. The alignment summary — words,
+anchored fraction, stage directions, cues, and `unheard` (words the Report
+prints that the recogniser left no time for: an editor's expansion of "NHS", a
+heckle the microphone missed) — is written to `analysis.json` for the person
+checking the result. `stm captions transcribe` is the other mode: the
+recogniser's own words, for content with no written record, and that track is
+machine text — `generatedBy` set, `reviewed: false`, badged by the player.
 
 ## Simplified captions
 

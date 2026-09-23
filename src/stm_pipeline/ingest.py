@@ -45,6 +45,9 @@ class SourceEntry:
     acquisition_route: str | None = None
     local_path: Path | None = None
     captions: str | None = None  # URL or local path to .vtt / .srt
+    #: A published transcript page (URL or file) to align to the audio when no
+    #: caption file exists. The text stays human; only the timing is machine.
+    official_report: str | None = None
     caption_language: str = "en"
     sign_language: str = "ase"
     language_label: str = "American Sign Language"
@@ -87,6 +90,7 @@ def parse_entry(d: Mapping[str, Any]) -> SourceEntry:
         acquisition_route=_opt(d, "acquisition_route"),
         local_path=Path(local) if local else None,
         captions=_opt(d, "captions"),
+        official_report=_opt(d, "official_report"),
         caption_language=_opt(d, "caption_language") or "en",
         sign_language=_opt(d, "sign_language") or "ase",
         language_label=_opt(d, "language_label") or "American Sign Language",

@@ -18,6 +18,7 @@ dependencies = [
   "opencv-python>=4.10",
   "onnxruntime>=1.19",
   "pyyaml>=6.0",
+  "rapidfuzz>=3.0",  # true longest-common-subsequence for caption alignment; difflib is greedy and mis-pins repeated phrases
 ]
 
 [project.optional-dependencies]
@@ -31,6 +32,9 @@ dev = [
 aws = [
   "anthropic[bedrock]>=1.7",  # AnthropicBedrockMantle: Claude on the Bedrock Messages endpoint
   "boto3>=1.35",               # S3 sync from the extraction container
+]
+captions = [
+  "faster-whisper>=1.0",  # CTranslate2 Whisper, CPU: a clock for a human transcript, or a machine one where none exists
 ]
 
 [project.scripts]
@@ -77,7 +81,10 @@ files = ["src", "tests", "harness"]
 warn_unreachable = true
 
 [[tool.mypy.overrides]]
-module = ["cv2", "cv2.*", "onnxruntime", "onnxruntime.*", "boto3", "boto3.*", "anthropic", "anthropic.*"]
+module = [
+  "cv2", "cv2.*", "onnxruntime", "onnxruntime.*", "boto3", "boto3.*",
+  "anthropic", "anthropic.*", "faster_whisper", "faster_whisper.*",
+]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

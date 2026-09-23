@@ -26,7 +26,9 @@ from stm.model import (
 from stm.schema import is_valid, validate_title
 from stm_pipeline import ffmpeg
 from stm_pipeline.activity import ActivityMeasurement, measure_activity
+from stm_pipeline.align import align, to_webvtt
 from stm_pipeline.analyze import Analysis, analyze
+from stm_pipeline.asr import DEFAULT_MODEL, transcribe_cached
 from stm_pipeline.captions import read_as_vtt
 from stm_pipeline.confidence import confidence as confidence_of
 from stm_pipeline.config import PipelineConfig
@@ -42,6 +44,7 @@ from stm_pipeline.crop import (
 from stm_pipeline.detect.base import Detector
 from stm_pipeline.identify import ClusterFeatures, choose_signer, cluster_detections, rank_clusters
 from stm_pipeline.ingest import SourceEntry, fetch_captions, fetch_media
+from stm_pipeline.official_report import fetch_official_report, parse_official_report
 from stm_pipeline.simplify import NullSimplifier, Simplifier
 
 
@@ -245,11 +248,31 @@ def process_title(
     poster_path = title_dir / "poster.jpg"
     ffmpeg.poster(main_path, max(0.0, info.duration_s * config.poster_at_fraction), poster_path)
 
-    # Captions.
+    # Captions. A caption file the publisher supplied wins; failing that, a
+    # published transcript aligned to the audio — the publisher's words on the
+    # recogniser's clock, which is still human text and is labelled as such.
     captions: list[Caption] = []
+    vtt: str | None = None
     cap_src = fetch_captions(entry, work_dir)
     if cap_src is not None:
         vtt = read_as_vtt(cap_src)
+    elif entry.official_report:
+        page = fetch_official_report(entry.official_report, work_dir / entry.id)
+        contributions = parse_official_report(page)
+        spoken = transcribe_cached(
+            video, work_dir / entry.id, DEFAULT_MODEL, entry.caption_language
+        )
+        cues, summary = align(contributions, spoken)
+        report["alignment"] = summary.to_dict()
+        (title_dir / "analysis.json").write_text(
+            json.dumps(report, indent=2) + "\n", encoding="utf-8"
+        )
+        vtt = to_webvtt(
+            cues,
+            "Text: the publisher's Official Report, unchanged. "
+            "Timing: aligned automatically to the audio by signed-track-manifest.",
+        )
+    if vtt is not None:
         verbatim_name = f"captions/verbatim.{entry.caption_language}.vtt"
         (title_dir / verbatim_name).write_text(vtt, encoding="utf-8")
         captions.append(
