@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from collections.abc import Sequence
 from dataclasses import replace
 from pathlib import Path
 
 from stm.model import FillMethod, Rect
-from stm_pipeline import ffmpeg
+from stm_pipeline import ffmpeg, publish
 from stm_pipeline.activity import idle_fraction, measure_activity, sparkline
 from stm_pipeline.align import align, machine_cues, to_webvtt
 from stm_pipeline.asr import DEFAULT_MODEL as ASR_DEFAULT_MODEL
@@ -55,6 +56,13 @@ def _config(args: argparse.Namespace) -> PipelineConfig:
     return cfg
 
 
+def _sources_file(spec: str, work: Path) -> Path:
+    """The sources list as a local file: a path as given, or an S3 object fetched into work/."""
+    if publish.is_s3(spec):
+        return publish.download(spec, work / "sources.yaml")
+    return Path(spec)
+
+
 def _add_common(p: argparse.ArgumentParser) -> None:
     p.add_argument("--detector", choices=sorted(MODELS), default="yolox-tiny")
     p.add_argument("--every", type=int, help="sample every Nth frame (default 5)")
@@ -76,12 +84,12 @@ def _parser() -> argparse.ArgumentParser:
     msub.add_parser("list", help="list known models and their licences")
 
     i = sub.add_parser("ingest", help="validate sources.yaml and fetch media")
-    i.add_argument("sources", type=Path)
+    i.add_argument("sources", help="sources.yaml: a path, or s3://bucket/key")
     i.add_argument("--work", type=Path, default=Path("work"))
     i.add_argument("--id", dest="only_id", help="only this source id")
 
     r = sub.add_parser("run", help="process titles end to end")
-    r.add_argument("sources", type=Path)
+    r.add_argument("sources", help="sources.yaml: a path, or s3://bucket/key")
     r.add_argument("--id", dest="only_id", help="only this source id (default: all)")
     r.add_argument("--out", type=Path, default=Path("out"))
     r.add_argument("--work", type=Path, default=Path("work"))
@@ -99,6 +107,16 @@ def _parser() -> argparse.ArgumentParser:
     )
     r.add_argument("--bedrock-region", help="AWS region (default: the usual AWS env/config chain)")
     r.add_argument("--chunk-size", type=int, default=40, help="cues per simplification request")
+    r.add_argument(
+        "--upload",
+        help="s3://bucket/prefix to upload each finished title under <prefix>/<id>/ "
+        "(default: s3://$STM_ASSETS_BUCKET/titles when that variable is set, as it is on Batch)",
+    )
+    r.add_argument(
+        "--public-base",
+        help="public URL of the titles directory; manifest URLs are made absolute under it "
+        "before upload (default: $STM_PUBLIC_BASE)",
+    )
     _add_common(r)
 
     s = sub.add_parser("spike", help="watchable outputs for one clip: box overlay, fill preview")
@@ -204,7 +222,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.cmd == "ingest":
         try:
-            entries = load_sources(args.sources)
+            entries = load_sources(_sources_file(args.sources, args.work))
             for e in entries:
                 if args.only_id and e.id != args.only_id:
                     continue
@@ -219,10 +237,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.cmd == "run":
         config = _config(args)
         try:
-            entries = load_sources(args.sources)
+            entries = load_sources(_sources_file(args.sources, args.work))
         except SourceError as exc:
             print(f"error: {exc}", file=sys.stderr)
             return 1
+        upload = args.upload or (
+            f"s3://{os.environ['STM_ASSETS_BUCKET']}/titles"
+            if os.environ.get("STM_ASSETS_BUCKET")
+            else None
+        )
+        public_base = args.public_base or os.environ.get("STM_PUBLIC_BASE")
         detector = _detector(config.detector)
         simplifier = (
             BedrockSimplifier(
@@ -249,6 +273,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                     )
                     for failure in st.failures:
                         print(f"  captions: {failure}", file=sys.stderr)
+                if upload:
+                    urls = publish.upload_title(mp.parent, upload, public_base, log=print)
+                    print(f"  uploaded {len(urls)} files to {upload.rstrip('/')}/{e.id}/")
                 written.append(mp)
                 print(f"{e.id}: {mp}")
             except (

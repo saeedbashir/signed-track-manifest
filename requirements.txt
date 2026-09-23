@@ -7,6 +7,7 @@ anthropic==1.7.0
 anyio==4.15.1
     # via
     #   anthropic
+    #   httpx
     #   httpx2
 ast-serialize==0.11.2
     # via mypy
@@ -14,6 +15,8 @@ attrs==26.1.0
     # via
     #   jsonschema
     #   referencing
+av==18.1.0
+    # via faster-whisper
 boto3==1.43.98
     # via
     #   anthropic
@@ -23,23 +26,52 @@ botocore==1.43.98
     #   anthropic
     #   boto3
     #   s3transfer
+certifi==2026.7.22
+    # via
+    #   httpcore
+    #   httpx
+click==8.5.0
+    # via huggingface-hub
 colorama==0.4.6 ; sys_platform == 'win32'
-    # via pytest
+    # via
+    #   pytest
+    #   tqdm
+ctranslate2==4.8.2
+    # via faster-whisper
 docstring-parser==0.18.0
     # via anthropic
+faster-whisper==1.2.1
+    # via signed-track-manifest
+filelock==4.0.1
+    # via huggingface-hub
 flatbuffers==25.12.19
     # via onnxruntime
-h11==0.16.0 ; sys_platform != 'emscripten'
-    # via httpcore2
+fsspec==2026.9.0
+    # via huggingface-hub
+h11==0.16.0
+    # via
+    #   httpcore
+    #   httpcore2
+hf-xet==1.6.0 ; platform_machine == 'AMD64' or platform_machine == 'aarch64' or platform_machine == 'amd64' or platform_machine == 'arm64' or platform_machine == 'x86_64'
+    # via huggingface-hub
+httpcore==1.0.9
+    # via httpx
 httpcore2==2.13.0 ; sys_platform != 'emscripten'
     # via httpx2
+httpx==0.28.1
+    # via huggingface-hub
 httpx2==2.13.0
     # via anthropic
 httpx2-jsfetch==1.0 ; python_full_version >= '3.12' and sys_platform == 'emscripten'
     # via httpx2
+huggingface-hub==1.32.0
+    # via
+    #   faster-whisper
+    #   tokenizers
 idna==3.20
     # via
     #   anyio
+    #   httpx
     #   httpx2
 iniconfig==2.3.0
     # via pytest
@@ -61,20 +93,25 @@ mypy-extensions==1.1.0
     # via mypy
 numpy==2.4.6 ; python_full_version < '3.12'
     # via
+    #   ctranslate2
     #   onnxruntime
     #   opencv-python
     #   signed-track-manifest
 numpy==2.5.3 ; python_full_version >= '3.12'
     # via
+    #   ctranslate2
     #   onnxruntime
     #   opencv-python
     #   signed-track-manifest
 onnxruntime==1.30.0
-    # via signed-track-manifest
+    # via
+    #   faster-whisper
+    #   signed-track-manifest
 opencv-python==5.0.0.93
     # via signed-track-manifest
 packaging==26.3
     # via
+    #   huggingface-hub
     #   onnxruntime
     #   pytest
 pathspec==1.1.1
@@ -94,6 +131,11 @@ pytest==9.1.1
 python-dateutil==2.9.0.post0
     # via botocore
 pyyaml==6.0.3
+    # via
+    #   ctranslate2
+    #   huggingface-hub
+    #   signed-track-manifest
+rapidfuzz==3.14.6
     # via signed-track-manifest
 referencing==0.37.0
     # via
@@ -112,6 +154,12 @@ six==1.17.0
     # via python-dateutil
 sniffio==1.3.1
     # via anthropic
+tokenizers==0.23.2
+    # via faster-whisper
+tqdm==4.70.1
+    # via
+    #   faster-whisper
+    #   huggingface-hub
 truststore==0.10.4 ; sys_platform != 'emscripten'
     # via
     #   httpcore2
@@ -125,6 +173,7 @@ typing-extensions==4.16.0
     #   anthropic
     #   anyio
     #   httpx2
+    #   huggingface-hub
     #   mypy
     #   pydantic
     #   pydantic-core

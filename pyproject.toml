@@ -82,6 +82,9 @@ warn_unreachable = true
 
 [[tool.mypy.overrides]]
 module = [
+  "boto3",
+  "boto3.*",
+  "botocore.*",
   "cv2", "cv2.*", "onnxruntime", "onnxruntime.*", "boto3", "boto3.*",
   "anthropic", "anthropic.*", "faster_whisper", "faster_whisper.*",
 ]

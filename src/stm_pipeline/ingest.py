@@ -20,6 +20,7 @@ from typing import Any
 import yaml
 
 from stm.model import Rect, SourceLayout
+from stm_pipeline import publish
 
 BLOCKED_HOSTS = ("youtube.com", "youtu.be", "googlevideo.com")
 _ID = re.compile(r"^[a-z0-9][a-z0-9-]{1,63}$")
@@ -44,6 +45,10 @@ class SourceEntry:
     production_credit: str | None = None
     acquisition_route: str | None = None
     local_path: Path | None = None
+    #: Where to fetch the file from when it is not `url` — an S3 object the
+    #: container can read, or a mirror. `url` stays the publisher's page, which
+    #: is what the manifest records as the source.
+    media: str | None = None
     captions: str | None = None  # URL or local path to .vtt / .srt
     #: A published transcript page (URL or file) to align to the audio when no
     #: caption file exists. The text stays human; only the timing is machine.
@@ -89,6 +94,7 @@ def parse_entry(d: Mapping[str, Any]) -> SourceEntry:
         production_credit=_opt(d, "production_credit"),
         acquisition_route=_opt(d, "acquisition_route"),
         local_path=Path(local) if local else None,
+        media=_opt(d, "media"),
         captions=_opt(d, "captions"),
         official_report=_opt(d, "official_report"),
         caption_language=_opt(d, "caption_language") or "en",
@@ -132,6 +138,10 @@ def _sha256(path: Path) -> str:
 
 
 def _download(url: str, dst: Path) -> None:
+    if publish.is_s3(url):
+        # The container's case: the source was staged in the sources bucket.
+        publish.download(url, dst)
+        return
     check_url_allowed(url)
     dst.parent.mkdir(parents=True, exist_ok=True)
     tmp = dst.with_suffix(dst.suffix + ".part")
@@ -152,10 +162,11 @@ def fetch_media(entry: SourceEntry, work_dir: Path) -> Path:
         if not entry.local_path.exists():
             raise SourceError(f"source {entry.id!r}: local_path {entry.local_path} does not exist")
         return entry.local_path
-    suffix = Path(urllib.parse.urlparse(entry.url).path).suffix or ".mp4"
+    source = entry.media or entry.url
+    suffix = Path(urllib.parse.urlparse(source).path).suffix or ".mp4"
     dst = work_dir / entry.id / f"source{suffix}"
     if not dst.exists():
-        _download(entry.url, dst)
+        _download(source, dst)
     return dst
 
 
