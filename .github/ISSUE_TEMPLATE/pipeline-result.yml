@@ -1,0 +1,31 @@
+name: The pipeline got a title wrong
+description: A wrong crop, a bad fill, missing activity, or captions out of time
+labels: [pipeline]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What went wrong
+      description: Which title, what you saw, and at what time in the video.
+    validations:
+      required: true
+  - type: textarea
+    id: analysis
+    attributes:
+      label: analysis.json
+      description: The file `stm run` wrote beside the manifest. It says what the pipeline decided and why.
+      render: json
+  - type: textarea
+    id: source
+    attributes:
+      label: The source
+      description: >-
+        Publisher, licence and acquisition route, as in your sources.yaml entry. Please
+        do not attach footage you do not have a licence to share; one frame is usually enough.
+  - type: textarea
+    id: command
+    attributes:
+      label: The command you ran
+      render: shell
+    validations:
+      required: true

@@ -1,0 +1,29 @@
+name: A change to the format
+description: A new field, a changed rule, or something the format cannot yet say
+labels: [format, proposal]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: What a player or producer needs to do that it cannot today
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: The change you propose
+      description: Field names, types, and where in the manifest. An example manifest helps.
+  - type: textarea
+    id: compat
+    attributes:
+      label: Compatibility
+      description: What happens to a manifest written today, and to a player that ignores the new field?
+  - type: checkboxes
+    id: rules
+    attributes:
+      label: The two fixed rules
+      options:
+        - label: This does not add a default to, or relax, the required `provenance` on sign tracks.
+          required: true
+        - label: This does not let generated captions appear human-reviewed.
+          required: true

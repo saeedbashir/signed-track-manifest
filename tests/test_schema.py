@@ -10,7 +10,9 @@ from stm.schema import is_valid, validate_catalogue, validate_title
 from tests.conftest import EXAMPLES, load_example
 
 
-@pytest.mark.parametrize("name", ["corner-inset.json", "side-panel.json"])
+@pytest.mark.parametrize(
+    "name", ["corner-inset.json", "side-panel.json", "scottish-parliament-fmqs-2026-09-17.json"]
+)
 def test_valid_examples(name: str) -> None:
     issues = validate_title(load_example(name))
     assert is_valid(issues), [str(i) for i in issues]

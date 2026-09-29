@@ -1,0 +1,30 @@
+name: A manifest validates when it should not, or fails when it should pass
+description: validate-stm or the schemas disagree with SPEC.md
+labels: [format, validator]
+body:
+  - type: textarea
+    id: manifest
+    attributes:
+      label: The manifest
+      description: Paste it, or attach the file. Shorten long activity arrays if you like.
+      render: json
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: What validate-stm printed
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected, and the part of SPEC.md that says so
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: "`pip show signed-track-manifest`, or the commit"

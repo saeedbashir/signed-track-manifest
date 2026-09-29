@@ -51,6 +51,7 @@ the uv lockfile and pins exactly what CI ran, for anyone who wants that with pip
 ```sh
 # validate a manifest
 validate-stm examples/corner-inset.json
+validate-stm examples/scottish-parliament-fmqs-2026-09-17.json   # a real published title
 
 # fetch the detector weights once (~20 MB, checksum verified)
 stm models fetch
@@ -254,7 +255,9 @@ Version 0.2, built during the Build, Ship, Shape: Amazon Developer Hackathon
 (September–October 2026) as the open-source companion to a Fire TV closed
 signing player. The format is young; expect 0.x changes, each recorded in
 [CHANGELOG.md](CHANGELOG.md). Open an issue if you build a player or a producer
-against it.
+against it; [CONTRIBUTING.md](CONTRIBUTING.md) says what makes a change quick to
+review, and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) applies everywhere the
+project runs.
 
 ## Licence
 
