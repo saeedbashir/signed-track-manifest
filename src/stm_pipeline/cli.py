@@ -15,8 +15,10 @@ from stm_pipeline import ffmpeg, publish
 from stm_pipeline.activity import idle_fraction, measure_activity, sparkline
 from stm_pipeline.align import align, machine_cues, to_webvtt
 from stm_pipeline.asr import DEFAULT_MODEL as ASR_DEFAULT_MODEL
+from stm_pipeline.asr import DEFAULT_TRANSCRIBE_LANGUAGE as ASR_TRANSCRIBE_LANGUAGE
 from stm_pipeline.asr import KNOWN_MODELS as ASR_MODELS
-from stm_pipeline.asr import generated_by, transcribe_cached
+from stm_pipeline.asr import RECOGNISERS as ASR_RECOGNISERS
+from stm_pipeline.asr import generated_by, transcribe_aws_cached, transcribe_cached
 from stm_pipeline.config import PipelineConfig
 from stm_pipeline.detect.base import Detector
 from stm_pipeline.detect.models import MODELS, ensure_model
@@ -53,6 +55,12 @@ def _config(args: argparse.Namespace) -> PipelineConfig:
     fill = getattr(args, "fill", None)
     if isinstance(fill, str):
         cfg = replace(cfg, fill_method=FillMethod(fill))
+    asr = getattr(args, "asr", None) or os.environ.get("STM_ASR")
+    if asr:
+        cfg = replace(cfg, asr=str(asr))
+    language = getattr(args, "transcribe_language", None)
+    if language:
+        cfg = replace(cfg, transcribe_language=str(language))
     return cfg
 
 
@@ -61,6 +69,19 @@ def _sources_file(spec: str, work: Path) -> Path:
     if publish.is_s3(spec):
         return publish.download(spec, work / "sources.yaml")
     return Path(spec)
+
+
+def _add_asr(p: argparse.ArgumentParser) -> None:
+    p.add_argument(
+        "--asr",
+        choices=ASR_RECOGNISERS,
+        help="clock for aligning a written transcript: whisper (local, default) or "
+        "transcribe (Amazon Transcribe; default from $STM_ASR)",
+    )
+    p.add_argument(
+        "--transcribe-language",
+        help=f"Amazon Transcribe language code (default {ASR_TRANSCRIBE_LANGUAGE})",
+    )
 
 
 def _add_common(p: argparse.ArgumentParser) -> None:
@@ -107,6 +128,7 @@ def _parser() -> argparse.ArgumentParser:
     )
     r.add_argument("--bedrock-region", help="AWS region (default: the usual AWS env/config chain)")
     r.add_argument("--chunk-size", type=int, default=40, help="cues per simplification request")
+    _add_asr(r)
     r.add_argument(
         "--upload",
         help="s3://bucket/prefix to upload each finished title under <prefix>/<id>/ "
@@ -184,6 +206,8 @@ def _parser() -> argparse.ArgumentParser:
     )
     ca.add_argument("--model", choices=ASR_MODELS, default=ASR_DEFAULT_MODEL)
     ca.add_argument("--language", default="en")
+    _add_asr(ca)
+    ca.add_argument("--media", help="s3:// URI of the same video, for --asr transcribe")
     ct = capsub.add_parser(
         "transcribe",
         help="a machine transcript as WebVTT, for content with no written record "
@@ -380,7 +404,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.cmd == "captions":
         work = args.work / args.video.stem
         try:
-            spoken = transcribe_cached(args.video, work, args.model, args.language)
+            if getattr(args, "asr", None) == "transcribe":
+                if not (args.media and publish.is_s3(args.media)):
+                    print("error: --asr transcribe needs --media s3://…", file=sys.stderr)
+                    return 2
+                spoken = transcribe_aws_cached(
+                    args.media, work, args.transcribe_language or ASR_TRANSCRIBE_LANGUAGE
+                )
+            else:
+                spoken = transcribe_cached(args.video, work, args.model, args.language)
         except RuntimeError as exc:
             print(f"error: {exc}", file=sys.stderr)
             return 2

@@ -76,6 +76,11 @@ class PipelineConfig:
 
     # Signing activity (published in the manifest; the player sets the idle rule)
     activity: bool = True
+    #: The clock for aligning a written transcript: "whisper" (local, default) or
+    #: "transcribe" (Amazon Transcribe; the media must be in S3, or a sources
+    #: bucket must be named for staging it). See asr.py for the measurements.
+    asr: str = "whisper"
+    transcribe_language: str = "en-GB"
     activity_interval_ms: int = 1000
     activity_percentile: float = 95.0  # the motion value that becomes 100, per title
 

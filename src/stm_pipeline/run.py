@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -24,11 +25,11 @@ from stm.model import (
     VideoAsset,
 )
 from stm.schema import is_valid, validate_title
-from stm_pipeline import ffmpeg
+from stm_pipeline import ffmpeg, publish
 from stm_pipeline.activity import ActivityMeasurement, measure_activity
 from stm_pipeline.align import align, to_webvtt
 from stm_pipeline.analyze import Analysis, analyze
-from stm_pipeline.asr import DEFAULT_MODEL, transcribe_cached
+from stm_pipeline.asr import DEFAULT_MODEL, transcribe_aws_cached, transcribe_cached
 from stm_pipeline.captions import read_as_vtt
 from stm_pipeline.confidence import confidence as confidence_of
 from stm_pipeline.config import PipelineConfig
@@ -186,6 +187,25 @@ def decide(
     )
 
 
+def _media_in_s3(entry: SourceEntry, video: Path) -> str:
+    """An s3:// URI for the source, which is what Transcribe reads.
+
+    On Batch the entry's `media` already is one. Locally the file is staged in
+    the sources bucket named by STM_SOURCES_BUCKET, under staging/<id>/.
+    """
+    if entry.media and publish.is_s3(entry.media):
+        return entry.media
+    bucket = os.environ.get("STM_SOURCES_BUCKET")
+    if not bucket:
+        raise RuntimeError(
+            "asr=transcribe needs the media in S3: give the entry `media: s3://…`, "
+            "or set STM_SOURCES_BUCKET so the local file can be staged there"
+        )
+    key = f"staging/{entry.id}/{video.name}"
+    publish.client().upload_file(str(video), bucket, key)
+    return f"s3://{bucket}/{key}"
+
+
 def process_title(
     entry: SourceEntry,
     detector: Detector,
@@ -259,9 +279,14 @@ def process_title(
     elif entry.official_report:
         page = fetch_official_report(entry.official_report, work_dir / entry.id)
         contributions = parse_official_report(page)
-        spoken = transcribe_cached(
-            video, work_dir / entry.id, DEFAULT_MODEL, entry.caption_language
-        )
+        if config.asr == "transcribe":
+            spoken = transcribe_aws_cached(
+                _media_in_s3(entry, video), work_dir / entry.id, config.transcribe_language
+            )
+        else:
+            spoken = transcribe_cached(
+                video, work_dir / entry.id, DEFAULT_MODEL, entry.caption_language
+            )
         cues, summary = align(contributions, spoken)
         report["alignment"] = summary.to_dict()
         # The analysis report stays out of the published title, so this is the
