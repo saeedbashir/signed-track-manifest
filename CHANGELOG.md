@@ -17,6 +17,10 @@ Library changes; the format is still 0.2 and no schema changed.
   a `NOTE` names where the words and the timing each came from, and
   `analysis.json` records the alignment summary including `unheard` words. On
   the 34-minute Party Leaders session: 4,854 words, 88.7 % anchored, 488 cues.
+- **Added** Amazon Transcribe as a second clock: `--asr transcribe` on `stm
+  run` and `stm captions align` (`STM_ASR=transcribe` on Batch). 83.8 % of the
+  Backbench session's Report anchored against Whisper's 85.3 %; Whisper stays
+  the default.
 - **Added** `stm captions transcribe` for content with no written record: the
   recogniser's own words, published as machine text (`generatedBy`, `reviewed:
   false`).

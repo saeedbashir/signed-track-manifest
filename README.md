@@ -164,6 +164,18 @@ puts the Report's words on the audio's clock and publishes the words unchanged:
    clause ends, never across a change of speaker or paragraph. The speaker is
    named on the first cue of each contribution.
 
+The clock can be Amazon Transcribe instead (`--asr transcribe`, or
+`STM_ASR=transcribe`; the media must be in S3). Measured on the 32-minute
+Backbench session against its Report:
+
+| Clock | Report words anchored | Cues | Time for the session |
+| --- | --- | --- | --- |
+| faster-whisper `small`, laptop CPU | 85.3 % | 459 | about 6 minutes |
+| Amazon Transcribe (`en-GB`) | 83.8 % | 461 | 80 seconds |
+
+Whisper is the default; the Batch job uses Transcribe, which needs no model
+download and runs as a managed service. Either way only the timings are used.
+
 The track is human text on machine timing, and is labelled that way: no
 `generatedBy` (the text was not generated), and a `NOTE` in the file saying
 where the words and the timing each came from. The alignment summary — words,
