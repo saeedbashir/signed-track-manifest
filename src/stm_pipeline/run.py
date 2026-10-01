@@ -44,7 +44,7 @@ from stm_pipeline.crop import (
 )
 from stm_pipeline.detect.base import Detector
 from stm_pipeline.identify import ClusterFeatures, choose_signer, cluster_detections, rank_clusters
-from stm_pipeline.ingest import SourceEntry, fetch_captions, fetch_media
+from stm_pipeline.ingest import SourceEntry, SourceError, fetch_captions, fetch_media
 from stm_pipeline.official_report import fetch_official_report, parse_official_report
 from stm_pipeline.simplify import NullSimplifier, Simplifier
 
@@ -187,6 +187,31 @@ def decide(
     )
 
 
+def main_picture(
+    entry: SourceEntry, keep: Rect | None, signer: Rect, frame_w: int, frame_h: int
+) -> Rect | None:
+    """What remains the programme: the hand-measured `main_rect` if the entry has
+    one, otherwise everything outside the panel.
+
+    A broadcaster's frame — the Scottish Parliament's purple border round the
+    chamber — is their branding, not the programme, and on a TV it reads as an
+    unfinished crop. The rectangle must lie in the frame and clear of the
+    interpreter, or the interpreter would appear twice.
+    """
+    rect = entry.main_rect
+    if rect is None:
+        return keep
+    if not Rect(0, 0, frame_w, frame_h).contains(rect):
+        raise SourceError(
+            f"source {entry.id!r}: main_rect {rect} is outside the {frame_w}x{frame_h} frame"
+        )
+    if rect.iou(signer) > 0:
+        raise SourceError(
+            f"source {entry.id!r}: main_rect {rect} overlaps the interpreter at {signer}"
+        )
+    return rect
+
+
 def _media_in_s3(entry: SourceEntry, video: Path) -> str:
     """An s3:// URI for the source, which is what Transcribe reads.
 
@@ -246,7 +271,13 @@ def process_title(
 
     # Main layer.
     main_path = title_dir / "main.mp4"
-    keep = decision.layout.main_keep_rect(info.width, info.height)
+    keep = main_picture(
+        entry,
+        decision.layout.main_keep_rect(info.width, info.height),
+        decision.rect_source,
+        info.width,
+        info.height,
+    )
     if keep is not None:
         ffmpeg.crop_away(video, keep, main_path, config.main_crf)
         fill_method = FillMethod.NONE

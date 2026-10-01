@@ -57,6 +57,9 @@ class SourceEntry:
     sign_language: str = "ase"
     language_label: str = "American Sign Language"
     crop_rect: Rect | None = None  # manual override, source pixels
+    #: The programme picture, when the broadcast frames it — a channel's coloured
+    #: border around the picture, say. Hand-measured like crop_rect; side panels only.
+    main_rect: Rect | None = None
     layout: SourceLayout | None = None  # required with crop_rect
     notes: str | None = None
 
@@ -83,6 +86,13 @@ def parse_entry(d: Mapping[str, Any]) -> SourceEntry:
     crop_rect = Rect.from_dict(crop) if isinstance(crop, Mapping) else None
     if crop_rect is not None and layout is None:
         raise SourceError(f"source {entry_id!r}: a manual crop_rect needs an explicit layout")
+    main = d.get("main_rect")
+    main_rect = Rect.from_dict(main) if isinstance(main, Mapping) else None
+    if main_rect is not None and layout is not SourceLayout.SIDE_PANEL:
+        raise SourceError(
+            f"source {entry_id!r}: main_rect needs layout: side-panel — with an inset, the "
+            "interpreter sits inside the picture and cropping cannot remove them"
+        )
     local = _opt(d, "local_path")
     return SourceEntry(
         id=entry_id,
@@ -101,6 +111,7 @@ def parse_entry(d: Mapping[str, Any]) -> SourceEntry:
         sign_language=_opt(d, "sign_language") or "ase",
         language_label=_opt(d, "language_label") or "American Sign Language",
         crop_rect=crop_rect,
+        main_rect=main_rect,
         layout=layout,
         notes=_opt(d, "notes"),
     )

@@ -144,3 +144,45 @@ def test_fetch_media_prefers_the_media_field_over_the_publisher_url(
     path = ingest.fetch_media(entry, tmp_path / "work")
     assert path.read_bytes() == b"video"
     assert path.name == "source.mp4"
+
+
+def test_main_rect_parses_for_side_panels_only() -> None:
+    base = {
+        "id": "t4",
+        "title": "T",
+        "url": "https://example.org/x",
+        "publisher": "P",
+        "licence": "L",
+        "attribution": "A",
+        "crop_rect": {"x": 1080, "y": 108, "w": 840, "h": 760},
+        "main_rect": {"x": 0, "y": 110, "w": 1066, "h": 758},
+    }
+    entry = ingest.parse_entry({**base, "layout": "side-panel"})
+    assert entry.main_rect is not None and entry.main_rect.w == 1066
+    with pytest.raises(ingest.SourceError):
+        ingest.parse_entry({**base, "layout": "corner-inset"})
+
+
+def test_main_picture_prefers_main_rect_and_rejects_bad_ones() -> None:
+    from stm.model import Rect
+    from stm_pipeline.run import main_picture
+
+    def entry(rect: dict[str, int] | None) -> ingest.SourceEntry:
+        d: dict[str, Any] = {
+            "id": "t5", "title": "T", "url": "https://example.org/x", "publisher": "P",
+            "licence": "L", "attribution": "A", "layout": "side-panel",
+            "crop_rect": {"x": 1080, "y": 108, "w": 840, "h": 760},
+        }  # fmt: skip
+        if rect:
+            d["main_rect"] = rect
+        return ingest.parse_entry(d)
+
+    signer = Rect(1080, 108, 840, 760)
+    panel_keep = Rect(0, 0, 1080, 1080)
+    assert main_picture(entry(None), panel_keep, signer, 1920, 1080) == panel_keep
+    chamber = {"x": 0, "y": 110, "w": 1066, "h": 758}
+    assert main_picture(entry(chamber), panel_keep, signer, 1920, 1080) == Rect(0, 110, 1066, 758)
+    with pytest.raises(ingest.SourceError, match="overlaps the interpreter"):
+        main_picture(entry({"x": 0, "y": 110, "w": 1200, "h": 758}), panel_keep, signer, 1920, 1080)
+    with pytest.raises(ingest.SourceError, match="outside"):
+        main_picture(entry({"x": 0, "y": 900, "w": 1000, "h": 400}), panel_keep, signer, 1920, 1080)
