@@ -29,7 +29,7 @@ from stm.model import (
 )
 from stm.schema import Issue, is_valid, validate_catalogue, validate_title
 
-__version__ = "0.1.0"
+__version__ = "0.3.0"
 
 __all__ = [
     "LOW_CONFIDENCE_THRESHOLD",

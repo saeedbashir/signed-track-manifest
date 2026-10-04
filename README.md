@@ -263,8 +263,8 @@ Dependencies and why each exists: [DEPENDENCIES.md](DEPENDENCIES.md).
 
 ## Status
 
-Version 0.2, built during the Build, Ship, Shape: Amazon Developer Hackathon
-(September–October 2026) as the open-source companion to a Fire TV closed
+Format 0.2, library 0.3.0, built during the Build, Ship, Shape: Amazon Developer
+Hackathon (September–October 2026) as the open-source companion to a Fire TV closed
 signing player. The format is young; expect 0.x changes, each recorded in
 [CHANGELOG.md](CHANGELOG.md). Open an issue if you build a player or a producer
 against it; [CONTRIBUTING.md](CONTRIBUTING.md) says what makes a change quick to

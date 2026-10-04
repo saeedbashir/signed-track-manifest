@@ -1,6 +1,6 @@
 [project]
 name = "signed-track-manifest"
-version = "0.1.0"
+version = "0.3.0"
 description = "Signed Track Manifest (STM): an open format for closed-signing tracks, a validator, and an extraction pipeline that produces it."
 readme = "README.md"
 requires-python = ">=3.11"

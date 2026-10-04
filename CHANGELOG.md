@@ -3,9 +3,9 @@
 Format versions and library releases. The format version is `stmVersion` in a
 manifest; the library version is `pyproject.toml`.
 
-## Unreleased
+## 0.3.0 — 2026-10-04
 
-Library changes; the format is still 0.2 and no schema changed.
+Library release; the format is still 0.2 and no schema changed.
 
 - **Added** caption tracks from a publisher's written transcript.
   `stm captions align VIDEO --report URL|FILE` (and `official_report:` on a
@@ -36,6 +36,18 @@ Library changes; the format is still 0.2 and no schema changed.
   verbatim track and a simplified one marked `reviewed: false`.
 - New dependency: `rapidfuzz` (core). New optional: `faster-whisper` (`captions`
   extra). Both MIT; see `DEPENDENCIES.md`.
+- **Added** `main_rect` on a side-panel source entry: the programme picture as a
+  hand-measured rectangle, like `crop_rect` for the interpreter, so a broadcaster's
+  frame around the picture is not published as part of it. Rejected unless the
+  layout is side-panel, the rectangle lies inside the frame and it does not overlap
+  the interpreter.
+- **Added** the full 32-minute Backbench session to the validation harness as
+  ground truth. Automatic bounding scores the same on the whole broadcast as on
+  its 120-second excerpt (IoU 0.727), which the harness note now says.
+- `stm run` prints the alignment summary, the one place a Batch log shows it.
+- SPEC: the reference player's auto-dim restores by looking ahead on the
+  activity track, so the interpreter is bright when the hands move, not after.
+- `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` and issue templates.
 
 ## 0.2.0 — 2026-09-22
 
