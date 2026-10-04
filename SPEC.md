@@ -118,7 +118,9 @@ a number published without that sentence will be read as one.
 The producer publishes the measurement; the **player decides what "idle"
 means**, exactly as it decides what a low `confidence` means. The reference
 player fades the signer layer at a threshold of 20 after two seconds and
-restores it after half a second above, opt-in and off by default. Whether
+restores it after half a second above — judged 0.7 s ahead of the playhead,
+which the precomputed track allows, so the layer is bright again as the hands
+start to move — opt-in and off by default. Whether
 signing viewers want that is an open question, which is why the threshold is
 the player's and not the format's.
 
